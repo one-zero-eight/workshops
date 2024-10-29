@@ -23,12 +23,24 @@ __all__ = [
     "AssociationProxy",
 ]
 
-from sqlalchemy import ForeignKey, UniqueConstraint
-from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+    and_,
+    any_,
+    bindparam,
+    delete,
+    insert,
+    join,
+    not_,
+    or_,
+    select,
+    union,
+    update,
+)
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import select, update, insert, delete, join, union
-from sqlalchemy import and_, or_, any_, not_
-from sqlalchemy import bindparam
-from sqlalchemy import DateTime
 from sqlalchemy.sql import func
-from sqlalchemy import Enum as SQLEnum, String

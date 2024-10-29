@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fastapi-template"
+name = "workshops"
 version = "0.1.0"
 description = ""
 authors = ["one-zero-eight <https://t.me/one_zero_eight>"]
@@ -29,7 +29,9 @@ lint.ignore = [
     # wildcard imports are fine
     "F403",
     "F405",
+    "PLR"
 ]
+lint.extend-select = ["I", "UP", "PL"]
 
 [build-system]
 requires = ["poetry-core"]
