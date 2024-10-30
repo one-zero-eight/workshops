@@ -3,8 +3,10 @@ __all__ = ["User", "UserRole"]
 from enum import StrEnum
 
 from sqlalchemy import Enum
+from sqlalchemy.orm import relationship
 
 from src.storages.sql.models.base import Base
+from src.storages.sql.models.workshops import CheckIn
 from src.storages.sql.utils import *
 
 
@@ -25,3 +27,4 @@ class User(Base):
     "User's name"
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.DEFAULT)
     "User's role"
+    check_ins: Mapped[list["CheckIn"]] = relationship("CheckIn", back_populates="user")

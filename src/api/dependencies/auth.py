@@ -1,4 +1,4 @@
-__all__ = ["CURRENT_USER_ID_DEPENDENCY", "get_current_user_id"]
+__all__ = ["CurrentUserIdDep", "get_current_user_id"]
 
 from typing import Annotated
 
@@ -6,7 +6,7 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.api.exceptions import IncorrectCredentialsException
-from src.modules.tokens.repository import TokenRepository
+from src.modules.tokens.dependencies import TokenRepositoryDep
 
 bearer_scheme = HTTPBearer(
     scheme_name="Bearer",
@@ -17,14 +17,14 @@ bearer_scheme = HTTPBearer(
 
 
 async def get_current_user_id(
-    bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    token_repository: TokenRepositoryDep, bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)
 ) -> int:
     # Prefer header to cookie
     token = bearer and bearer.credentials
     if not token:
         raise IncorrectCredentialsException(no_credentials=True)
-    token_data = await TokenRepository.verify_user_token(token, IncorrectCredentialsException())
+    token_data = await token_repository.verify_user_token(token, IncorrectCredentialsException())
     return token_data.user_id
 
 
-CURRENT_USER_ID_DEPENDENCY = Annotated[int, Depends(get_current_user_id)]
+CurrentUserIdDep = Annotated[int, Depends(get_current_user_id)]

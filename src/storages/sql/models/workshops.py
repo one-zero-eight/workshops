@@ -2,8 +2,8 @@ __all__ = ["Workshop", "CheckIn"]
 
 import datetime
 
-from sqlalchemy import ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.storages.sql.models.base import Base
 
@@ -21,10 +21,15 @@ class Workshop(Base):
     dtend: Mapped[datetime.datetime] = mapped_column()
 
     capacity: Mapped[int] = mapped_column()
+    remain_places: Mapped[int] = mapped_column()
+
+    check_ins: Mapped[list["CheckIn"]] = relationship("CheckIn", back_populates="workshop")
 
 
 class CheckIn(Base):
     __tablename__ = "workshops_checkins"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    workshop_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    workshop_id: Mapped[int] = mapped_column(Integer, ForeignKey("workshops.id", ondelete="CASCADE"), primary_key=True)
+    workshop: Mapped["Workshop"] = relationship("Workshop", back_populates="check_ins")
+    user = relationship("User", back_populates="check_ins")

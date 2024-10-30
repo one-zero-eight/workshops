@@ -1,6 +1,6 @@
-__all__ = ["SQLAlchemyStorage", "storage"]
+__all__ = ["SQLAlchemyStorage"]
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 
 class SQLAlchemyStorage:
@@ -18,9 +18,6 @@ class SQLAlchemyStorage:
         engine = create_async_engine(url)
         return cls(engine)
 
-    def create_session(self) -> AsyncSession:
-        return self.sessionmaker()
-
     async def create_all(self) -> None:
         from src.storages.sql.models import Base
 
@@ -29,6 +26,3 @@ class SQLAlchemyStorage:
 
     async def close_connection(self):
         await self.engine.dispose()
-
-
-storage: SQLAlchemyStorage

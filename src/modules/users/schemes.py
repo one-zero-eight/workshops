@@ -1,16 +1,16 @@
-__all__ = ["CreateUser", "ViewUser"]
+__all__ = ["CreateUserScheme", "ViewUserScheme"]
 
 
 from src.pydantic_base import BaseSchema
 
 
-class CreateUser(BaseSchema):
+class CreateUserScheme(BaseSchema):
     innohassle_id: str
     email: str
     name: str | None = None
 
 
-class ViewUser(BaseSchema):
+class ViewUserScheme(BaseSchema):
     id: int
     innohassle_id: str
     email: str

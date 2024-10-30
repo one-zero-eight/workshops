@@ -5,21 +5,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import src.storages.sql.storage
 from src.config import settings
 from src.modules.innohassle_accounts import innohassle_accounts
 
 
-async def setup_repositories():
-    import src.storages.sql.storage
-
+async def setup_repositories(app):
     async_engine = create_async_engine(settings.database_uri.get_secret_value())
-    storage = src.storages.sql.storage.SQLAlchemyStorage(async_engine)
-    src.storages.sql.storage.storage = storage
+    app.state.storage = src.storages.sql.storage.SQLAlchemyStorage(async_engine)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await setup_repositories()
+    await setup_repositories(app)
     await innohassle_accounts.update_key_set()
     yield
     from src.storages.sql.storage import storage

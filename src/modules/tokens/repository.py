@@ -6,8 +6,8 @@ from authlib.jose import JoseError, JWTClaims, jwt
 from pydantic import BaseModel
 
 from src.modules.innohassle_accounts import innohassle_accounts
-from src.modules.users.repository import user_repository
-from src.modules.users.schemas import CreateUser
+from src.modules.users.repository import SqlUserRepository
+from src.modules.users.schemes import CreateUserScheme
 
 
 class UserTokenData(BaseModel):
@@ -16,8 +16,10 @@ class UserTokenData(BaseModel):
 
 
 class TokenRepository:
-    @classmethod
-    def decode_token(cls, token: str) -> JWTClaims:
+    def __init__(self, user_repository: SqlUserRepository) -> None:
+        self.user_repository = user_repository
+
+    def decode_token(self, token: str) -> JWTClaims:
         now = time.time()
         pub_key = innohassle_accounts.get_public_key()
         payload = jwt.decode(token, pub_key)
@@ -25,9 +27,8 @@ class TokenRepository:
         payload.validate_iat(now, leeway=0)
         return payload
 
-    @classmethod
-    async def fetch_user_id_or_create(cls, innohassle_id: str) -> int | None:
-        user_id = await user_repository.read_id_by_innohassle_id(innohassle_id)
+    async def fetch_user_id_or_create(self, innohassle_id: str) -> int | None:
+        user_id = await self.user_repository.read_id_by_innohassle_id(innohassle_id)
         if user_id is not None:
             return user_id
 
@@ -35,22 +36,21 @@ class TokenRepository:
         if innohassle_user is None:
             return None
 
-        user = CreateUser(
+        user = CreateUserScheme(
             innohassle_id=innohassle_id,
             email=innohassle_user.innopolis_sso.email,
             name=innohassle_user.innopolis_sso.name,
         )
-        user_id = (await user_repository.create(user)).id
+        user_id = (await self.user_repository.create(user)).id
         return user_id
 
-    @classmethod
-    async def verify_user_token(cls, token: str, credentials_exception) -> UserTokenData:
+    async def verify_user_token(self, token: str, credentials_exception) -> UserTokenData:
         try:
-            payload = cls.decode_token(token)
+            payload = self.decode_token(token)
             innohassle_id: str = payload.get("uid")
             if innohassle_id is None:
                 raise credentials_exception
-            user_id = await cls.fetch_user_id_or_create(innohassle_id)
+            user_id = await self.fetch_user_id_or_create(innohassle_id)
             if user_id is None:
                 raise credentials_exception
             return UserTokenData(user_id=user_id, innohassle_id=innohassle_id)
