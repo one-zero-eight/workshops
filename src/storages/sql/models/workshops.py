@@ -2,7 +2,7 @@ __all__ = ["Workshop", "CheckIn"]
 
 import datetime
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.storages.sql.models.base import Base
@@ -17,13 +17,13 @@ class Workshop(Base):
     alias: Mapped[str] = mapped_column(String(255), unique=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
-    dtstart: Mapped[datetime.datetime] = mapped_column()
-    dtend: Mapped[datetime.datetime] = mapped_column()
+    dtstart: Mapped[datetime.datetime] = mapped_column(DateTime)
+    dtend: Mapped[datetime.datetime] = mapped_column(DateTime)
 
     capacity: Mapped[int] = mapped_column()
     remain_places: Mapped[int] = mapped_column()
 
-    check_ins: Mapped[list["CheckIn"]] = relationship("CheckIn", back_populates="workshop")
+    check_ins = relationship("CheckIn", back_populates="workshop")
 
 
 class CheckIn(Base):
@@ -31,5 +31,5 @@ class CheckIn(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     workshop_id: Mapped[int] = mapped_column(Integer, ForeignKey("workshops.id", ondelete="CASCADE"), primary_key=True)
-    workshop: Mapped["Workshop"] = relationship("Workshop", back_populates="check_ins")
+    workshop = relationship("Workshop", back_populates="check_ins")
     user = relationship("User", back_populates="check_ins")

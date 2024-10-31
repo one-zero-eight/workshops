@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.api.dependencies.auth import CurrentUserIdDep
+from src.api.dependencies import CurrentUserIdDep
 from src.api.exceptions import IncorrectCredentialsException
 from src.modules.users.dependencies import SqlUserRepositoryDep
 from src.modules.users.schemes import ViewUserScheme

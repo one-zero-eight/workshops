@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Response, status
 
-from src.api.dependencies.auth import CurrentUserIdDep
+from src.api.dependencies import CurrentUserIdDep
 from src.api.exceptions import IncorrectCredentialsException
 from src.modules.workshops.dependencies import SqlCheckInRepositoryDep, SqlWorkshopRepositoryDep
-from src.modules.workshops.schemes import ViewWorkshopScheme
+from src.modules.workshops.schemes import CreateWorkshopScheme, ViewWorkshopScheme
 
 router = APIRouter(
     prefix="/workshops",
@@ -12,6 +12,34 @@ router = APIRouter(
         **IncorrectCredentialsException.responses,
     },
 )
+
+
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "All workshops"},
+    },
+)
+async def read_all_workshops(workshop_repository: SqlWorkshopRepositoryDep) -> list[ViewWorkshopScheme]:
+    return await workshop_repository.read_all()
+
+
+@router.post(
+    "/create",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Workshop successfully created"},
+        status.HTTP_400_BAD_REQUEST: {"description": "Creation failed"},
+    },
+)
+async def create_workshop(
+    user_id: CurrentUserIdDep, workshop_repository: SqlWorkshopRepositoryDep, workshop: CreateWorkshopScheme
+) -> ViewWorkshopScheme:
+    workshop = await workshop_repository.create(workshop)
+    if workshop:
+        return workshop
+    return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @router.post(
