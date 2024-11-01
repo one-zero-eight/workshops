@@ -1,4 +1,4 @@
-# FastAPI Template
+# Workshops API | InNoHassle ecosystem
 
 ## Table of contents
 
