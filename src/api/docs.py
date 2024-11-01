@@ -6,8 +6,8 @@ from fastapi.routing import APIRoute
 VERSION = "0.1.0"
 
 # Info for OpenAPI specification
-TITLE = "FastAPI template"
-SUMMARY = "FastAPI template for InNoHassle ecosystem."
+TITLE = "Workshops API"
+SUMMARY = "Workshops API | InNoHassle ecosystem for InNoHassle ecosystem."
 
 DESCRIPTION = None
 

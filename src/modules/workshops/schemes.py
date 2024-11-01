@@ -30,3 +30,9 @@ class CreateWorkshopScheme(BaseModel):
         if self.dtstart >= self.dtend:
             raise ValueError("`dtstart` must be less than `dtend`")
         return self
+
+    @model_validator(mode="after")
+    def validate_capacity(self):
+        if self.capacity <= 0:
+            raise ValueError("`capacity` must be greater than zero")
+        return self

@@ -26,4 +26,4 @@ class User(Base):
     "User's name"
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.DEFAULT)
     "User's role"
-    check_ins = relationship("CheckIn", back_populates="user")
+    check_ins = relationship("CheckIn", back_populates="user", lazy="selectin")

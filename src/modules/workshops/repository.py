@@ -2,7 +2,9 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.users.schemes import ViewUserScheme
 from src.modules.workshops.schemes import CreateWorkshopScheme, ViewWorkshopScheme
+from src.storages.sql.models.users import User
 from src.storages.sql.models.workshops import CheckIn, Workshop
 
 
@@ -26,12 +28,6 @@ class SqlWorkshopRepository:
         workshops = workshops.scalars()
         return [ViewWorkshopScheme.model_validate(wk, from_attributes=True) for wk in workshops]
 
-    async def get_list_by_user_id(self, user_id: int) -> list[ViewWorkshopScheme]:
-        request = select(Workshop).join(Workshop.check_ins).where(CheckIn.user_id == user_id)
-        workshops = await self.session.execute(request)
-        workshops = workshops.scalars()
-        return [ViewWorkshopScheme.model_validate(wk, from_attributes=True) for wk in workshops]
-
     async def get_by_id(self, workshop_id: int) -> ViewWorkshopScheme | None:
         request = select(Workshop).where(Workshop.id == workshop_id)
         workshop = await self.session.execute(request)
@@ -40,12 +36,12 @@ class SqlWorkshopRepository:
             return ViewWorkshopScheme.model_validate(workshop, from_attributes=True)
 
     async def update_remain_places(self, workshop_id: int, delta: int) -> None:
-        request = (
+        query = (
             update(Workshop)
             .where(Workshop.id == workshop_id)
             .values({Workshop.remain_places: Workshop.remain_places + delta})
         )
-        await self.session.execute(request)
+        await self.session.execute(query)
 
 
 class SqlCheckInRepository:
@@ -86,3 +82,22 @@ class SqlCheckInRepository:
         await self.session.commit()
 
         return True
+
+    async def get_check_inned_users_by_workshop_id(self, workshop_id: int) -> list[ViewUserScheme] | None:
+        workshop = await self.workshops_repository.get_by_id(workshop_id)
+        if workshop is None:
+            return
+        query = select(CheckIn, User).join(User, User.id == CheckIn.user_id).where(CheckIn.workshop_id == workshop_id)
+        results = await self.session.execute(query)
+        results = results.all()
+        return [ViewUserScheme.model_validate(user, from_attributes=True) for _, user in results]
+
+    async def get_check_inned_workshops_by_user_id(self, user_id: int) -> list[ViewWorkshopScheme]:
+        query = (
+            select(CheckIn, Workshop)
+            .join(Workshop, Workshop.id == CheckIn.workshop_id)
+            .where(CheckIn.user_id == user_id)
+        )
+        results = await self.session.execute(query)
+        results = results.all()
+        return [ViewWorkshopScheme.model_validate(wk, from_attributes=True) for _, wk in results]

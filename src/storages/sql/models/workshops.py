@@ -23,7 +23,7 @@ class Workshop(Base):
     capacity: Mapped[int] = mapped_column()
     remain_places: Mapped[int] = mapped_column()
 
-    check_ins = relationship("CheckIn", back_populates="workshop")
+    check_ins = relationship("CheckIn", back_populates="workshop", lazy="selectin")
 
 
 class CheckIn(Base):

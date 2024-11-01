@@ -2,6 +2,7 @@ from fastapi import APIRouter, Response, status
 
 from src.api.dependencies import CurrentUserIdDep
 from src.api.exceptions import IncorrectCredentialsException
+from src.modules.users.schemes import ViewUserScheme
 from src.modules.workshops.dependencies import SqlCheckInRepositoryDep, SqlWorkshopRepositoryDep
 from src.modules.workshops.schemes import CreateWorkshopScheme, ViewWorkshopScheme
 
@@ -42,6 +43,19 @@ async def create_workshop(
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
+@router.get(
+    "/my-check-ins",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "List of workshops"},
+    },
+)
+async def get_my_check_ins(
+    user_id: CurrentUserIdDep, check_in_repository: SqlCheckInRepositoryDep
+) -> list[ViewWorkshopScheme]:
+    return await check_in_repository.get_check_inned_workshops_by_user_id(user_id)
+
+
 @router.post(
     "/check-in/{workshop_id}",
     status_code=status.HTTP_200_OK,
@@ -77,13 +91,30 @@ async def check_out_workshop(
 
 
 @router.get(
-    "/my-check-ins",
+    "/{workshop_id}",
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"description": "List of workshops", "model": ViewWorkshopScheme},
+        status.HTTP_200_OK: {"description": "Workshop information"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop is not found"},
     },
 )
-async def get_my_check_ins(
-    user_id: CurrentUserIdDep, workshops_repository: SqlWorkshopRepositoryDep
-) -> list[ViewWorkshopScheme]:
-    return await workshops_repository.get_list_by_user_id(user_id)
+async def read_workshop_by_id(workshop_repository: SqlWorkshopRepositoryDep, workshop_id: int) -> ViewWorkshopScheme:
+    workshop = await workshop_repository.get_by_id(workshop_id)
+    if workshop:
+        return workshop
+    return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.get(
+    "/{workshop_id}/check-ins",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "List of users"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop is not found"},
+    },
+)
+async def read_check_in_users(check_in_repository: SqlCheckInRepositoryDep, workshop_id: int) -> list[ViewUserScheme]:
+    users = await check_in_repository.get_check_inned_users_by_workshop_id(workshop_id)
+    if users is None:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    return users
