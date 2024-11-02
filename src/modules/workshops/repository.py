@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,6 +64,12 @@ class SqlCheckInRepository:
 
         exists = await self.exists(workshop_id, user_id)
         if exists:
+            return False
+
+        time_now = datetime.datetime.now(tz=None)
+        registration_start_time = workshop.dtend.replace(hour=0, minute=0, second=0)
+
+        if time_now < registration_start_time or time_now > workshop.dtstart:
             return False
 
         request = insert(CheckIn).values(workshop_id=workshop_id, user_id=user_id)
