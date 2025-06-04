@@ -2,11 +2,14 @@ from datetime import datetime
 from enum import Enum
 import uuid
 
-from sqlmodel import SQLModel, create_engine, Session, Field
+from sqlmodel import Relationship, SQLModel, create_engine, Session, Field
 from datetime import timedelta
 
 
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
+
+if TYPE_CHECKING:
+    from .check_in import WorkshopCheckin  
 
 
 def generate_uuid_id():
@@ -26,10 +29,11 @@ class UserRole(str, Enum):
 class Users(SQLModel, table=True):
     id: str = Field(default_factory=generate_uuid_id, primary_key=True)
     email: str = Field(index=True, unique=True)
+    innohassle_id: str = Field(default="someid")
     hashed_password: str
     role: UserRole = Field(default=UserRole.user)
+    checkins: List["WorkshopCheckin"] = Relationship(back_populates="user")
 
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDkwMzQzNzYsInN1YiI6ImE5NTU5MDZjLWY4MzktNDQwYi04MmI3LWIwNDIyYjI3ZDZmMyJ9.BGXJz02CbVnv3ahF8GLdddWCcN7H5-UdsEBX41B0FCA
 
 
 class UserCreate(SQLModel):

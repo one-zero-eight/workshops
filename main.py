@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from app.crud import config
 from app.api.routes import workshops
 from app.api.routes import users
@@ -7,6 +7,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, UploadFile, File
 from app.services import excel_parser
+from app.models.user import Users
+from typing import Annotated
+from app.api.routes.users import get_current_user
 
 
 import os
@@ -37,8 +40,13 @@ app.include_router(users.router)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def root(request: Request,
+               user: Annotated[Users, Depends(get_current_user)]):
+    if user.role == "admin":
+        return "cock"
+    
+    if user.role == "user":      
+        return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/upload")
 async def download(file: UploadFile = File(...)):

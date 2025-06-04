@@ -7,7 +7,9 @@ import os
 from dotenv import load_dotenv
 
 from app.crud.config import get_session
+from app.models.check_in import WorkshopCheckin
 from app.models.user import Users, UserRole, UserCreate, UserRead, UserLogin, Token
+from app.models.workshop import Workshop
 from app.security import verify_password, get_password_hash, create_acess_token
 from secrets import token_urlsafe
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -47,7 +49,7 @@ def is_admin(user: Annotated[Users, Depends(get_current_user)]):
 @router.post("/register", response_model=Token)
 async def register(user_create: UserCreate, session: Annotated[Session, Depends(get_session)]):
     exists = session.exec(select(Users).where(
-        UserCreate.email == user_create.email)).first()
+        Users.email == user_create.email)).first()
     if exists:
         raise HTTPException(status_code=400, detail="Email already registered")
 
