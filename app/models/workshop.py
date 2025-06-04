@@ -7,10 +7,7 @@ from datetime import timedelta
 
 
 from typing import Optional
-
-
-def generate_uuid_id():
-    return str(uuid.uuid4())
+from app.models.user import generate_uuid_id
 
 
 class BaseWorkshop(SQLModel):
@@ -51,32 +48,3 @@ class WorkshopUpdate(SQLModel):
     place: Optional[str] = None
     available_places: Optional[int] = None
     max_places: Optional[int] = None
-
-
-class UserRole(str, Enum):
-    admin = "admin"
-    user = "user" 
-
-class BaseUser(SQLModel):
-    full_name: str = Field(max_length=255)
-    email: str = Field()
-    role: UserRole = Field(default=UserRole.user)
-
-class User(BaseUser, table=True):
-    id: str = Field(default_factory=generate_uuid_id, primary_key=True)
-    hashed_password: str = Field(max_length=40)
-
-class UserCreate(SQLModel):
-    full_name: str
-    email: str
-    password: str
-    
-class UserLogin(SQLModel):
-    email: str
-    password: str
-
-class UserRead(SQLModel):
-    id: str
-    name: str
-    email: str
-    role: UserRole

@@ -1,8 +1,13 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from app.crud import config
-from app.routes import workshops
-from app.routes import users
+from app.api.routes import workshops
+from app.api.routes import users
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, UploadFile, File
+
+
 
 import os
 
@@ -24,16 +29,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+templates = Jinja2Templates(directory=".")
+
 
 app.include_router(workshops.router)
 app.include_router(users.router)
 
 
-@app.get("/")
-async def root():
-    """Health check endpoint for the API."""
-    return {"message": "Welcome to the Task Management API"}
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
+@app.post("/upload")
+async def download(file: UploadFile = File(...)):
+    content = await file.read()
+    filename = file.filename
+    
+    with open(f"{filename}", "wb") as f:
+        f.write(content)
+
+    return {"filename": filename, "type": file.content_type, "size": len(content)}
 
 if __name__ == "__main__":
     import uvicorn
