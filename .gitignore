@@ -2,4 +2,5 @@
 __pycache__/
 app/__pycache__/
 .env
+handle.xlxs
 tasks.db

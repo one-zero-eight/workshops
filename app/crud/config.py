@@ -2,7 +2,7 @@ import os
 
 from sqlmodel import SQLModel, create_engine, Session
 from dotenv import load_dotenv
-from models.user import Users
+from app.models.user import Users
 
 load_dotenv()
 

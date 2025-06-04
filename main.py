@@ -6,7 +6,7 @@ from app.api.routes import users
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, UploadFile, File
-
+from app.services import excel_parser
 
 
 import os
@@ -43,12 +43,13 @@ async def root(request: Request):
 @app.post("/upload")
 async def download(file: UploadFile = File(...)):
     content = await file.read()
-    filename = file.filename
+    content_type = str(file.filename).split(".")[-1]
     
-    with open(f"{filename}", "wb") as f:
+    with open(f"handle.{content_type}", "wb") as f:
         f.write(content)
 
-    return {"filename": filename, "type": file.content_type, "size": len(content)}
+    return "hello"
+
 
 if __name__ == "__main__":
     import uvicorn

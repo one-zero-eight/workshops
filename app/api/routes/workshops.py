@@ -4,9 +4,9 @@ from typing import List, Annotated
 
 from app.crud.config import get_session
 from app.api.routes import users
-from models.user import Users
-from models.workshop import Workshop, BaseWorkshop, WorkshopRead, WorkshopCreate, WorkshopUpdate
-from models.check_in import CheckIns
+from app.models.user import Users
+from app.models.workshop import Workshop, BaseWorkshop, WorkshopRead, WorkshopCreate, WorkshopUpdate
+from app.models.check_in import CheckIns
 
 router = APIRouter(prefix="/api/workshops")
 

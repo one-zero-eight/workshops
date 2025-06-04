@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 
 from app.crud.config import get_session
-from models.user import Users, UserRole, UserCreate, UserRead, UserLogin, Token
+from app.models.user import Users, UserRole, UserCreate, UserRead, UserLogin, Token
 from app.security import verify_password, get_password_hash, create_acess_token
 from secrets import token_urlsafe
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
