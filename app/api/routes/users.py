@@ -21,7 +21,7 @@ router = APIRouter(prefix="/users")
 
 SECRET_KEY = os.getenv("SECRET_KEY", token_urlsafe(32))
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_TIME = 30
+TOKEN_EXPIRE_TIME = os.getenv("TOKEN_EXPIRE_TIME", 60)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -36,8 +36,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
         return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDkwMzYxMjcsInN1YiI6ImI1OGQ5MzM3LWFmYzUtNGJiNy1hMmQ3LWE0YjA0NmNkZmY1MCJ9.SO6JrZazdBVpSHsAxBDn-sls0_WReoRDRN-pDUR6IwQ
 
 
 def is_admin(user: Annotated[Users, Depends(get_current_user)]):
@@ -61,7 +59,7 @@ async def register(user_create: UserCreate, session: Annotated[Session, Depends(
     session.refresh(user)
 
     access_token = create_acess_token(
-        str(user.id), timedelta(minutes=TOKEN_EXPIRE_TIME))
+        str(user.id), timedelta(minutes=int(TOKEN_EXPIRE_TIME)))
     return Token(access_token=access_token)
 
 
@@ -76,5 +74,5 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], sess
             status_code=401, detail="Invalid email or password")
 
     token = create_acess_token(
-        str(user.id), timedelta(minutes=TOKEN_EXPIRE_TIME))
+        str(user.id), timedelta(minutes=int(TOKEN_EXPIRE_TIME)))
     return Token(access_token=token)

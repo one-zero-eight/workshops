@@ -25,22 +25,7 @@ class BaseWorkshop(SQLModel):
     place: Optional[str] = Field(default=None)
     capacity: int
     remain_places: int = Field(default=10, ge=0)
-    # available_places: int = Field(
-    #     default=10, ge=0, description="Number of available places left")
-    # max_places: int = Field(
-    #     default=10, ge=0,  description="Maximum number of places available")
-
-# class Workshop1(SQLModel, table=True):
-#     id: Optional[int] = Field(default=None, primary_key=True)
-#     name: str = Field(max_length=255)
-#     alias: str = Field(max_length=255, unique=True)
-#     description: Optional[str] = None
-#     dtstart: datetime
-#     dtend: datetime
-#     capacity: int
-#     remain_places: int
-
-#     checkins: List["WorkshopCheckin"] = Relationship(back_populates="workshop")
+    is_active: Optional[bool] = False
 
 
 class Workshop(BaseWorkshop, table=True):
@@ -75,3 +60,5 @@ class WorkshopUpdate(SQLModel):
     dtend: Optional[datetime] = Field(default=None)
     place: Optional[str] = Field(default=None)
     capacity: Optional[int] = Field(default=None)
+    is_active: Optional[bool] = Field(default=None)
+
