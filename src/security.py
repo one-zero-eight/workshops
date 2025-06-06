@@ -1,14 +1,15 @@
 from passlib.context import CryptContext
 from datetime import timedelta, datetime
-from app.api.routes import users
-from jose import jwt, JWTError
+from src.modules.workshops import dependencies
+from jose import jwt
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+pwd_context = CryptContext(schemes=["argon2"])
 
 def create_acess_token(subject: str, expires_delta: timedelta):
-    expire = datetime.utcnow() + expires_delta
+    expire = datetime.now() + expires_delta
     to_encode = {"exp": expire, "sub": subject}
-    return jwt.encode(to_encode, users.SECRET_KEY, users.ALGORITHM)
+    return jwt.encode(to_encode, dependencies.SECRET_KEY, dependencies.ALGORITHM)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
