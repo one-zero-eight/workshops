@@ -6,7 +6,7 @@ from jose import jwt, JWTError
 import os
 from dotenv import load_dotenv
 
-from src.api.lifespan import get_session
+from src.storages.sql.dependencies import get_session
 from src.modules.users.schemes import Users, UserCreate
 from src.modules.tokens.schemes import Token
 from src.modules.workshops.dependencies import CheckInRepositoryDep, UserDep
@@ -16,6 +16,9 @@ from secrets import token_urlsafe
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from src.modules.users.enums import UsersEnum
 from src.modules.users.dependencies import UsersRepositoryDep
+
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+
 
 load_dotenv()
 

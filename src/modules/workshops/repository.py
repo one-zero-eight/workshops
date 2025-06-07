@@ -6,11 +6,13 @@ from datetime import datetime, timedelta
 from src.modules.workshops.schemes import WorkshopCheckin, Workshop, WorkshopCreate, WorkshopUpdate
 from src.modules.users.schemes import Users
 
-from src.modules.workshops.enums import WorkshopEnum, CheckInEnum   
+from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class WorkshopRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
     # TODO: Check whether it should return none
@@ -18,20 +20,20 @@ class WorkshopRepository:
         db_workshop = Workshop.model_validate(workshop)
 
         self.session.add(db_workshop)
-        self.session.commit()
-        self.session.refresh(db_workshop)
+        await self.session.commit()
+        await self.session.refresh(db_workshop)
 
         return db_workshop, WorkshopEnum.CREATED
-    
+
     async def get_all_workshops(self, limit: int = 100) -> Sequence[Workshop]:
         query = select(Workshop)
-        workshops = self.session.exec(query.limit(limit=limit))
-        return workshops.all()
+        result = await self.session.execute(query.limit(limit=limit))
+        return result.scalars().all()
 
     async def get_workshop_by_id(self, workshop_id: str) -> Workshop | None:
         query = select(Workshop).where(Workshop.id == workshop_id)
-        workshop = self.session.exec(query).first()
-        return workshop
+        result = await self.session.execute(query)
+        return result.scalars().first()
 
     async def update_workshop(self, workshop_id: str, workshop_update: WorkshopUpdate) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
@@ -40,48 +42,46 @@ class WorkshopRepository:
             for key, value in workshop_dump.items():
                 if value is not None:
                     setattr(workshop, key, value)
-        
+
             self.session.add(workshop)
-            self.session.commit()
-            self.session.refresh(workshop)
-        
+            await self.session.commit()
+            await self.session.refresh(workshop)
+
         return workshop
-    
+
     async def change_active_status_workshop(self, workshop_id: str, active: bool) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
         if not workshop:
             return None
-        
+
         workshop.is_active = active
         workshop.remain_places = workshop.capacity  # Reset remaining places to capacity
-    
-        self.session.add(workshop)
-        self.session.commit()
-        self.session.refresh(workshop)
-        
-        return workshop
 
+        self.session.add(workshop)
+        await self.session.commit()
+        await self.session.refresh(workshop)
+
+        return workshop
 
     async def delete_workshop(self, workshop_id: str) -> WorkshopEnum:
         workshop = await self.get_workshop_by_id(workshop_id)
-        
+
         if not workshop:
             return WorkshopEnum.WORKSHOP_DOES_NOT_EXIST
-        
-        self.session.delete(workshop)
-        self.session.commit()
-        
+
+        await self.session.delete(workshop)
+        await self.session.commit()
+
         return WorkshopEnum.DELETED
 
 
-
 class CheckInRepository:
-    def __init__(self, session: Session, workshop_repo: WorkshopRepository):
+    def __init__(self, session: AsyncSession, workshop_repo: WorkshopRepository):
         self.session = session
         self.workshop_repo = workshop_repo
 
     async def exists_checkin(self, user_id: str, workshop_id: str) -> bool:
-        existing = self.session.get(WorkshopCheckin, (user_id, workshop_id))
+        existing = await self.session.get(WorkshopCheckin, (user_id, workshop_id))
         if existing is not None:
             return True
         return False
@@ -99,7 +99,7 @@ class CheckInRepository:
         if workshop.dtstart >= datetime.now() + timedelta(days=1):
             return CheckInEnum.INVALID_TIME
 
-        #TODO: Fix bug here with checking in
+        # TODO: Fix bug here with checking in
         if await self.exists_checkin(user_id, workshop_id):
             return CheckInEnum.ALREADY_CHECKED_IN
 
@@ -110,12 +110,12 @@ class CheckInRepository:
 
         checkin = WorkshopCheckin(user_id=user_id, workshop_id=workshop.id)
         self.session.add(checkin)
-        self.session.commit()
-        self.session.refresh(checkin)
+        await self.session.commit()
+        await self.session.refresh(checkin)
 
         workshop.remain_places -= 1
         self.session.add(workshop)
-        self.session.commit()
+        await self.session.commit()
 
         return CheckInEnum.SUCCESS
 
@@ -128,13 +128,13 @@ class CheckInRepository:
         if not await self.exists_checkin(user_id, workshop_id):
             return CheckInEnum.CHECK_IN_DOES_NOT_EXIST
 
-        checkin = self.session.get(WorkshopCheckin, (user_id, workshop_id))
-        self.session.delete(checkin)
-        self.session.commit()
+        checkin = await self.session.get(WorkshopCheckin, (user_id, workshop_id))
+        await self.session.delete(checkin)
+        await self.session.commit()
 
         workshop.remain_places += 1
         self.session.add(workshop)
-        self.session.commit()
+        await self.session.commit()
 
         return CheckInEnum.SUCCESS
 
@@ -142,10 +142,11 @@ class CheckInRepository:
         statement = select(Workshop).join(WorkshopCheckin).where(
             WorkshopCheckin.user_id == user_id)
 
-        results = self.session.exec(statement)
-        return results.all()
+        results = await self.session.execute(statement)
+        return results.scalars().all()
 
     async def get_checked_in_users_for_workshop(self, workshop_id: str) -> Sequence[Users]:
         statement = select(Users).join(WorkshopCheckin).where(
             WorkshopCheckin.workshop_id == workshop_id)
-        return self.session.exec(statement).all()
+        result = await self.session.execute(statement)
+        return result.scalars().all()
