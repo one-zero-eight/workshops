@@ -4,8 +4,6 @@ import uvicorn
 import os
 
 
-
-
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
 #     config.create_db_and_table()
@@ -49,10 +47,12 @@ os.chdir(Path(__file__).parents[2])
 # Get arguments from command
 args = sys.argv[1:]
 
-uvicorn.main.main([
-    "src.api.app:app",
-    # "--host", "0.0.0.0",
-    "--port", "8080",
-    "--use-colors",
-    "--reload",
-])
+if __name__ == "__main__":
+
+    uvicorn.main.main([
+        "src.api.app:app",
+        # "--host", "0.0.0.0",
+        "--port", "9000",
+        "--use-colors",
+        "--reload",
+    ])

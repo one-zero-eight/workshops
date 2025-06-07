@@ -6,7 +6,7 @@ from typing import Sequence
 from datetime import datetime, timedelta
 
 from src.modules.workshops.schemes import WorkshopCheckin, Workshop, WorkshopCreate, WorkshopUpdate
-from src.modules.users.schemes import Users
+from src.modules.users.schemes import UserRole, Users
 
 from src.modules.workshops.enums import WorkshopEnum, CheckInEnum   
 
@@ -42,6 +42,25 @@ class UsersRepository:
     async def read_by_email(self, user_email: str) -> Users | None:
         query = select(Users).where(Users.email == user_email)
         user = self.session.exec(query).first()
+        return user
+    
+    
+    async def change_role_of_user(self, user_id: str, role: str) -> Users | None:
+        query = select(Users).where(Users.id == user_id)
+        user = self.session.exec(query).first() 
+        
+        if not user:
+            return None
+        
+        if role == "admin":
+            user.role = UserRole.admin
+        else: 
+            user.role = UserRole.user
+                
+        self.session.add(user)
+        self.session.commit()
+        self.session.refresh(user)
+        
         return user
         
     

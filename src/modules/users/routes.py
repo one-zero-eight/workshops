@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session, select, update
 from typing import Annotated, List
 from jose import jwt, JWTError
@@ -90,4 +90,21 @@ async def get_my_checkins(
     if not workshops:
         raise HTTPException(status_code=404, detail="No check-ins found for this user")
     return [WorkshopReadAll.model_validate(workshop) for workshop in workshops]
+    
+# TODO: REMOVE IN THE FUTURE  
+@router.post("/change_role",
+            responses={
+                status.HTTP_200_OK: {"description": "Changed role succesfully"},
+                status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+                status.HTTP_404_NOT_FOUND: {"description": "Failed during changing role"},
+            })
+async def change_role(
+    user: UserDep,
+    role: str,
+    users_repo: UsersRepositoryDep,
+):
+    userChanged = await users_repo.change_role_of_user(user.id, role)
+    if not userChanged:
+        raise HTTPException(status_code=404, detail="Role not changed")
+    return Response(status_code=status.HTTP_200_OK)
     
