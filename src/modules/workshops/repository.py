@@ -1,10 +1,11 @@
-from sqlmodel import Session, select
+from sqlmodel import select
 from typing import Sequence
 
 from datetime import datetime, timedelta
 
-from src.modules.workshops.schemes import WorkshopCheckin, Workshop, WorkshopCreate, WorkshopUpdate
-from src.modules.users.schemes import Users
+from src.storages.sql.models.workshops import Workshop, WorkshopCheckin
+from src.modules.workshops.schemes import CreateWorkshopScheme, UpdateWorkshopScheme
+from src.storages.sql.models.users import User
 
 from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
 
@@ -16,7 +17,7 @@ class WorkshopRepository:
         self.session = session
 
     # TODO: Check whether it should return none
-    async def create_workshop(self, workshop: WorkshopCreate) -> tuple[Workshop | None, WorkshopEnum]:
+    async def create_workshop(self, workshop: CreateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
         db_workshop = Workshop.model_validate(workshop)
 
         self.session.add(db_workshop)
@@ -35,7 +36,7 @@ class WorkshopRepository:
         result = await self.session.execute(query)
         return result.scalars().first()
 
-    async def update_workshop(self, workshop_id: str, workshop_update: WorkshopUpdate) -> Workshop | None:
+    async def update_workshop(self, workshop_id: str, workshop_update: UpdateWorkshopScheme) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
         if workshop:
             workshop_dump = workshop.model_dump()
@@ -145,8 +146,8 @@ class CheckInRepository:
         results = await self.session.execute(statement)
         return results.scalars().all()
 
-    async def get_checked_in_users_for_workshop(self, workshop_id: str) -> Sequence[Users]:
-        statement = select(Users).join(WorkshopCheckin).where(
+    async def get_checked_in_users_for_workshop(self, workshop_id: str) -> Sequence[User]:
+        statement = select(User).join(WorkshopCheckin).where(
             WorkshopCheckin.workshop_id == workshop_id)
         result = await self.session.execute(statement)
         return result.scalars().all()

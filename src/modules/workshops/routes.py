@@ -1,66 +1,23 @@
-import os
-from secrets import token_urlsafe
 from fastapi import APIRouter, HTTPException, Response, status
-from fastapi.security import OAuth2PasswordBearer
 from typing import List
 
 
-
 from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
-from src.modules.workshops.schemes import WorkshopCreate, WorkshopRead, WorkshopReadAll, WorkshopUpdate
-from src.modules.users.schemes import UserRead
+from src.modules.users.schemes import ViewUserScheme
+from src.api.dependencies import CurrentUserIdDep
+from src.modules.workshops.schemes import ReadWorkshopScheme, CreateWorkshopScheme, UpdateWorkshopScheme, ReadAllWorkshopsScheme
 
+from src.modules.workshops.dependencies import WorkshopRepositoryDep, CheckInRepositoryDep, AdminDep
 
-from src.modules.workshops.dependencies import WorkshopRepositoryDep, DbSessionDep, CheckInRepositoryDep, AdminDep, UserDep
+from src.modules.users.dependencies import UsersRepositoryDep
+
 
 router = APIRouter(prefix="/api/workshops")
 
-# TODO: Cancel out all dependencies here
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-SECRET_KEY = os.getenv("SECRET_KEY", token_urlsafe(32))
-ALGORITHM = "HS256"
-TOKEN_EXPIRE_TIME = os.getenv("TOKEN_EXPIRE_TIME", 60)
-
-
-
-
-# def get_workshop_or_404(session: Session, workshop_id: str) -> Workshop:
-#     workshop = session.get(Workshop, workshop_id)
-#     if not workshop:
-#         raise HTTPException(status_code=404, detail="Workshop not found")
-#     return workshop
-
-
-# def get_workshops_for_user(session: Session, user_id: str) -> Sequence[Workshop]:
-#     statement = select(Workshop).join(WorkshopCheckin).where(
-#         WorkshopCheckin.user_id == user_id)
-
-#     results = session.exec(statement)
-#     return results.all()
-
-
-# def validate_checkin_conditions(session: Session, user: Users, workshop: Workshop):
-#     if not workshop.is_active:
-#         raise HTTPException(
-#             status_code=400, detail="This workshop is not active")
-#     if workshop.remain_places <= 0:
-#         raise HTTPException(
-#             status_code=400, detail="No available places left in this workshop.")
-#     if workshop.dtstart >= datetime.now() + timedelta(days=1):
-#         raise HTTPException(
-#             status_code=400, detail="This workshop will start in more than 1 day")
-
-#     checked_in_workshops = get_workshops_for_user(session, user.id)
-#     for other in checked_in_workshops:
-#         if other.dtstart <= workshop.dtend and workshop.dtstart <= other.dtend:
-#             raise HTTPException(
-#                 status_code=400, detail="This workshop overlaps with another you're already checked in to.")
 
 @router.post("/",
              status_code=status.HTTP_201_CREATED,
-             response_model=WorkshopRead,
+             response_model=ReadWorkshopScheme,
              responses={
                  status.HTTP_201_CREATED: {"description": "Workshop successfully created"},
                  status.HTTP_400_BAD_REQUEST: {"description": "Workshop creation failed"},
@@ -68,18 +25,17 @@ TOKEN_EXPIRE_TIME = os.getenv("TOKEN_EXPIRE_TIME", 60)
                  status.HTTP_403_FORBIDDEN: {"description": "Not authorized (admin required)"},
              })
 async def add_workshop(*,
-                       session: DbSessionDep,
                        workshop_repo: WorkshopRepositoryDep,
-                       workshop_create: WorkshopCreate,
-                       _: AdminDep):
+                       workshop_create: CreateWorkshopScheme,
+                       _: AdminDep,):
     workshop, status = await workshop_repo.create_workshop(workshop_create)
     if status != WorkshopEnum.CREATED:
         raise HTTPException(status_code=400, detail=status.value)
-    return WorkshopRead.model_validate(workshop)
+    return ReadWorkshopScheme.model_validate(workshop)
 
 
 @router.get("/{workshop_id}",
-            response_model=WorkshopRead,
+            response_model=ReadWorkshopScheme,
             responses={
                 status.HTTP_200_OK: {"description": "Workshop details"},
                 status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
@@ -87,19 +43,18 @@ async def add_workshop(*,
             })
 async def get_workshop_details(
     *,
-    session: DbSessionDep,
     workshop_repo: WorkshopRepositoryDep,
     workshop_id: str,
-    _: UserDep
+    user: CurrentUserIdDep
 ):
     workshop = await workshop_repo.get_workshop_by_id(workshop_id)
     if not workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
-    return WorkshopRead.model_validate(workshop)
+    return ReadWorkshopScheme.model_validate(workshop)
 
 
 @router.get("/",
-            response_model=List[WorkshopReadAll],
+            response_model=List[ReadAllWorkshopsScheme],
             responses={
                 status.HTTP_200_OK: {"description": "All workshops retrieved successfully"},
                 status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
@@ -108,14 +63,13 @@ async def get_all_workshops(
     *,
     workshop_repo: WorkshopRepositoryDep,
     limit: int = 100,
-    _: UserDep
+    _: CurrentUserIdDep,
 ):
     workshops = await workshop_repo.get_all_workshops(limit)
-    # if not workshops:
-    #     raise HTTPException(status_code=404, detail="No workshops found")
-    return [WorkshopReadAll.model_validate(workshop) for workshop in workshops]
+    return [ReadAllWorkshopsScheme.model_validate(workshop) for workshop in workshops]
 
-#TODO: Write my checkins for user and all users for admin
+# TODO: Write my checkins for user and all users for admin
+
 
 @router.put("/{workshop_id}",
             responses={
@@ -126,7 +80,7 @@ async def get_all_workshops(
             })
 async def update_workshop(
     workshop_id: str,
-    workshop: WorkshopUpdate,
+    workshop: UpdateWorkshopScheme,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
 ):
@@ -148,7 +102,6 @@ async def activate_workshop(
     workshop_id: str,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
-    session: DbSessionDep
 ):
     workshop = await workshop_repo.change_active_status_workshop(workshop_id, True)
     if not workshop:
@@ -167,7 +120,6 @@ async def deactivate_workshop(
     workshop_id: str,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
-    session: DbSessionDep
 ):
     workshop = await workshop_repo.change_active_status_workshop(workshop_id, False)
     if not workshop:
@@ -185,7 +137,6 @@ async def deactivate_workshop(
 async def delete_workshop(workshop_id: str,
                           _: AdminDep,
                           workshop_repo: WorkshopRepositoryDep,
-                          session: DbSessionDep
                           ):
     workshops = await workshop_repo.delete_workshop(workshop_id)
     if workshops != WorkshopEnum.DELETED:
@@ -203,9 +154,15 @@ async def delete_workshop(workshop_id: str,
              })
 async def checkin_user(
     workshop_id: str,
-    user: UserDep,
+    user_id: CurrentUserIdDep,
     checkin_repo: CheckInRepositoryDep,
+    user_repo: UsersRepositoryDep
 ):
+    user = await user_repo.read_by_id(user_id)  # type: ignore
+    if user is None:
+        raise HTTPException(
+            status_code=500, detail="User not found")
+
     check_in_status = await checkin_repo.create_checkIn(user.id, workshop_id)
 
     if check_in_status != CheckInEnum.SUCCESS:
@@ -222,9 +179,15 @@ async def checkin_user(
              })
 async def checkout_user(
     workshop_id: str,
-    user: UserDep,
     checkin_repo: CheckInRepositoryDep,
+    user_id: CurrentUserIdDep,
+    user_repo: UsersRepositoryDep
 ):
+    user = await user_repo.read_by_id(user_id)  # type: ignore
+    if user is None:
+        raise HTTPException(
+            status_code=500, detail="User not found")
+
     remove_check_in_status = await checkin_repo.remove_checkIn(user.id, workshop_id)
     if remove_check_in_status != CheckInEnum.SUCCESS:
         raise HTTPException(
@@ -241,9 +204,7 @@ async def get_all_check_ins(
 ):
     users = await checkin_repo.get_checked_in_users_for_workshop(workshop_id)
     if not users:
-        raise HTTPException(status_code=404, detail="No check-ins found for this workshop")
+        raise HTTPException(
+            status_code=404, detail="No check-ins found for this workshop")
 
-    return [UserRead.model_validate(user) for user in users]    
-
-    
-    
+    return [ViewUserScheme.model_validate(user) for user in users]

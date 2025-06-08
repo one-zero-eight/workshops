@@ -1,24 +1,30 @@
-to start project 
+# WorkshopsAPI | Backend for summer team project
 
-clone
+## About
+[In process...]
+Backend part for summer team project. FastAPI + PostgreSQL
+
+## How to start
+0. Python >= 3.13 && PostgreSQL >= 15
+1. Clone project
 ```bash
 git clone https://github.com/tomatoCoderq/workshops_api
 cd workshops_api
 ```
-
-create venv
+2. Download uv (package manager as Poetry and pip)
 ```bash
-python -m venv .venv
+curl -LsSf https://astral.sh/uv/install.sh | sh #Windows: powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+3. Create venv 
+```bash
+uv venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
-
-download uv
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-install dependencies
+4. Install dependencies
 ```bash
 uv pip install -e .
 ```
+5. Create .env (check out example)
+6. Create setting.yaml (check out example)
 
