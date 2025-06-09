@@ -35,13 +35,6 @@ class ReadWorkshopScheme(SQLModel):
     remain_places: int
 
 
-class ReadAllWorkshopsScheme(SQLModel):
-    id: str
-    name: str
-    dtstart: datetime
-    dtend: datetime
-
-
 class UpdateWorkshopScheme(SQLModel):
     name: Optional[str]
     alias: Optional[str]

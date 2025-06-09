@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from src.storages.sql.models.users import User
 from src.modules.workshops.dependencies import CheckInRepositoryDep
-from src.modules.workshops.schemes import ReadAllWorkshopsScheme
+from src.modules.workshops.schemes import ReadWorkshopScheme
 from src.modules.users.dependencies import UsersRepositoryDep
 
 from src.api.dependencies import CurrentUserIdDep
@@ -25,7 +25,7 @@ async def get_me(user_id: CurrentUserIdDep, user_repository: UsersRepositoryDep)
 
 
 @router.get("/my_checkins",
-            response_model=List[ReadAllWorkshopsScheme],
+            response_model=List[ReadWorkshopScheme],
             responses={
                 status.HTTP_200_OK: {"description": "User's check-ins retrieved successfully"},
                 status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
@@ -44,7 +44,7 @@ async def get_my_checkins(
     if not workshops:
         raise HTTPException(
             status_code=404, detail="No check-ins found for this user")
-    return [ReadAllWorkshopsScheme.model_validate(workshop) for workshop in workshops]
+    return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
 
 # TODO: REMOVE IN THE FUTURE
 

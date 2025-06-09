@@ -5,7 +5,7 @@ from typing import List
 from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
 from src.modules.users.schemes import ViewUserScheme
 from src.api.dependencies import CurrentUserIdDep
-from src.modules.workshops.schemes import ReadWorkshopScheme, CreateWorkshopScheme, UpdateWorkshopScheme, ReadAllWorkshopsScheme
+from src.modules.workshops.schemes import ReadWorkshopScheme, CreateWorkshopScheme, UpdateWorkshopScheme
 
 from src.modules.workshops.dependencies import WorkshopRepositoryDep, CheckInRepositoryDep, AdminDep
 
@@ -34,27 +34,27 @@ async def add_workshop(*,
     return ReadWorkshopScheme.model_validate(workshop)
 
 
-@router.get("/{workshop_id}",
-            response_model=ReadWorkshopScheme,
-            responses={
-                status.HTTP_200_OK: {"description": "Workshop details"},
-                status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
-                status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
-            })
-async def get_workshop_details(
-    *,
-    workshop_repo: WorkshopRepositoryDep,
-    workshop_id: str,
-    user: CurrentUserIdDep
-):
-    workshop = await workshop_repo.get_workshop_by_id(workshop_id)
-    if not workshop:
-        raise HTTPException(status_code=404, detail="Workshop not found")
-    return ReadWorkshopScheme.model_validate(workshop)
+# @router.get("/{workshop_id}",
+#             response_model=ReadWorkshopScheme,
+#             responses={
+#                 status.HTTP_200_OK: {"description": "Workshop details"},
+#                 status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
+#                 status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+#             })
+# async def get_workshop_details(
+#     *,
+#     workshop_repo: WorkshopRepositoryDep,
+#     workshop_id: str,
+#     user: CurrentUserIdDep
+# ):
+#     workshop = await workshop_repo.get_workshop_by_id(workshop_id)
+#     if not workshop:
+#         raise HTTPException(status_code=404, detail="Workshop not found")
+#     return ReadWorkshopScheme.model_validate(workshop)
 
 
 @router.get("/",
-            response_model=List[ReadAllWorkshopsScheme],
+            response_model=List[ReadWorkshopScheme],
             responses={
                 status.HTTP_200_OK: {"description": "All workshops retrieved successfully"},
                 status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
@@ -66,7 +66,7 @@ async def get_all_workshops(
     _: CurrentUserIdDep,
 ):
     workshops = await workshop_repo.get_all_workshops(limit)
-    return [ReadAllWorkshopsScheme.model_validate(workshop) for workshop in workshops]
+    return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
 
 # TODO: Write my checkins for user and all users for admin
 
