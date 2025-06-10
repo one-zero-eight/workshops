@@ -39,7 +39,7 @@ class WorkshopRepository:
     async def update_workshop(self, workshop_id: str, workshop_update: UpdateWorkshopScheme) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
         if workshop:
-            workshop_dump = workshop.model_dump()
+            workshop_dump = workshop_update.model_dump()
             for key, value in workshop_dump.items():
                 if value is not None:
                     setattr(workshop, key, value)
@@ -48,7 +48,9 @@ class WorkshopRepository:
             await self.session.commit()
             await self.session.refresh(workshop)
 
-        return workshop
+            return workshop
+
+        return None
 
     async def change_active_status_workshop(self, workshop_id: str, active: bool) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
