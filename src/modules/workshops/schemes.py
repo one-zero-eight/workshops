@@ -36,11 +36,10 @@ class ReadWorkshopScheme(SQLModel):
 
 
 class UpdateWorkshopScheme(SQLModel):
-    name: Optional[str]
-    alias: Optional[str]
-    description: Optional[str]
-    dtstart: Optional[datetime]
-    dtend: Optional[datetime]
-    place: Optional[str]
-    capacity: Optional[int]
-    is_active: Optional[bool]
+    name: Optional[str] = None
+    description: Optional[str] = None
+    dtstart: Optional[datetime] = None
+    dtend: Optional[datetime] = None
+    place: Optional[str] = None
+    capacity: Optional[int] = None
+    is_active: Optional[bool] = None
