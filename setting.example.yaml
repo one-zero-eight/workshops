@@ -3,4 +3,4 @@ environment: development
 database_uri: postgresql+asyncpg://username:password@host:5432/db # Database URL, "postgresql+asyncpg://postgres:postgres@db:5432/postgres" inside the docker network
 accounts:
   # get from https://api.innohassle.ru/accounts/v0/tokens/generate-service-token?sub=service-name&scopes=users&only_for_me=true
-  api_jwt_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZXJ2aWNlLW5hbWUiLCJleHAiOjE3NTcwODk4ODEsImlhdCI6MTc0OTMxMzg4MSwic2NvcGUiOiJ1c2Vyczo2NmI5MTdjNGVjYjlkYWVmZWYyYTU1NDgifQ.f5Zyc7zvTynWaf97TidJlsrE8SMo6tazp-AfzetGnzSSoTUrYDi7ubAQlyXIAEJ0tv05Xf9u8zl-zUalQGbI1CLS5FjMrTsvWJOxhEkwdIq5sLrQWTKxdALoawn8kT4rvBPdeULqKHpY1XnmBWcyBfwawClmbaq_smxKKSr8C2Y9e5cb19E4QHlTXyMirqu5_2Wnvvwfjr7RrroIzrYGmfA-JpkLK3fbkef511jfLkw2v7bxHTnvCklevyjcR3a253I_jsvZnK4Vdb7QDY4ROkRLre0f0pd03Jo5OA6GIwUS8RQwwoQttQr460fOK-lSsObbtHKyjHxNggtMvZpTeQ"
+  api_jwt_token: "token_here"
