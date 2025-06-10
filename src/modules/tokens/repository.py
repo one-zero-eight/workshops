@@ -30,7 +30,6 @@ class TokenRepository:
         payload = jwt.decode(token, pub_key)
         payload.validate_exp(now, leeway=0)
         payload.validate_iat(now, leeway=0)
-        print("wasnt")
         return payload
 
     async def fetch_user_id_or_create(self, innohassle_id: str) -> str | None:
@@ -54,10 +53,20 @@ class TokenRepository:
     async def verify_user_token(self, token: str, credentials_exception) -> UserTokenData:
         try:
             payload = self.decode_token(token)
-            # TODO: Эта строчка блять всё может сломать
+
+            print("Payload:", payload)
+        
+            # TODO: Эта строчка блять всё может сломать чек чек
             innohassle_id: str = payload.get("uid")  # type:ignore
+
             if innohassle_id is None:
-                raise credentials_exception
+                innohassle_id = payload.get("scope")  # type:ignore
+                if innohassle_id is None:
+                    raise credentials_exception
+                innohassle_id = innohassle_id[6:]
+
+            print(innohassle_id)
+
             user_id = await self.fetch_user_id_or_create(innohassle_id)
             if user_id is None:
                 raise credentials_exception
