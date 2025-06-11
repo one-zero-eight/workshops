@@ -8,13 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlmodel import SQLModel
 import os
 from src.config import settings
+from src.logging import logger
 
 
 engine = create_async_engine(
-    # TODO: Delete this not forgot to include into
     url=settings.database_uri._secret_value,
-    # url=os.getenv("WURL", "sqlite+aiosqlite:///./tasks.db"),
-    echo=True
+    # echo=True
 )
 
 async_session = async_sessionmaker(
@@ -22,6 +21,7 @@ async_session = async_sessionmaker(
 
 
 async def create_db_and_table():
+    logger.info("Accessing db and tables...")
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 

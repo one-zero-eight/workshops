@@ -10,6 +10,7 @@ from src.storages.sql.models.users import User
 from src.modules.users.schemes import CreateUserScheme, UserRole
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.logging import logger
 
 
 class UsersRepository:
@@ -31,9 +32,13 @@ class UsersRepository:
         return user.scalars().first()
 
     async def read_by_id(self, user_id: str) -> User | None:
+        logger.info(user_id)
         query = select(User).where(User.id == user_id)
         user = await self.session.execute(query)
-        return user.scalars().first()
+        user = user.scalars().first()
+        if user is None:
+            logger.warning("User not found")
+        return user
 
     async def read_id_by_innohassle_id(self, innohassle_id: str) -> str | None:
         query = select(User.id).where(User.innohassle_id == innohassle_id)

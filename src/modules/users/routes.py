@@ -8,6 +8,7 @@ from src.modules.workshops.schemes import ReadWorkshopScheme
 from src.modules.users.dependencies import UsersRepositoryDep
 
 from src.api.dependencies import CurrentUserIdDep
+from src.logging import logger
 
 
 load_dotenv()
@@ -15,7 +16,9 @@ load_dotenv()
 router = APIRouter(prefix="/users")
 
 
-@router.get("/me", responses={200: {"description": "Current user info"}})
+@router.get("/me",
+            responses={200: {"description": "Current user info"}}
+            )
 async def get_me(user_id: CurrentUserIdDep, user_repository: UsersRepositoryDep) -> User | None:
     """
     Get current user info if authenticated

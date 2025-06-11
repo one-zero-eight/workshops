@@ -10,6 +10,7 @@ from src.modules.users.repository import UsersRepository
 from src.modules.innohassle_accounts import innohassle_accounts
 from src.modules.users.schemes import CreateUserScheme
 from sqlmodel import SQLModel
+from src.logging import logger
 
 
 class UserTokenData(SQLModel):
@@ -37,11 +38,12 @@ class TokenRepository:
         if user_id is not None:
             return user_id
 
+        logger.info("User not found. Attempting to create user")
+
         innohassle_user = await innohassle_accounts.get_user_by_id(innohassle_id)
         if innohassle_user is None:
             return None
 
-    # TODO: REcheck here
         user = CreateUserScheme(
             innohassle_id=innohassle_id,
             email=innohassle_user.innopolis_sso.email,  # type: ignore
@@ -53,23 +55,26 @@ class TokenRepository:
     async def verify_user_token(self, token: str, credentials_exception) -> UserTokenData:
         try:
             payload = self.decode_token(token)
-
-            print("Payload:", payload)
         
             # TODO: Эта строчка блять всё может сломать чек чек
             innohassle_id: str = payload.get("uid")  # type:ignore
+            
+            logger.info(payload)
 
-            if innohassle_id is None:
-                innohassle_id = payload.get("scope")  # type:ignore
-                if innohassle_id is None:
-                    raise credentials_exception
-                innohassle_id = innohassle_id[6:]
+            logger.info(f"uid == None: {payload.get("uid") == None}.\n")
+            # if innohassle_id is None:
+            #     innohassle_id = payload.get("scope")  # type:ignore
+            #     logger.warning(f"scope == None: {payload.get("scope") == None} Used service token.")
+            #     if innohassle_id is None:
+            #         raise credentials_exception
+            #     innohassle_id = innohassle_id[6:]
 
-            print(innohassle_id)
 
             user_id = await self.fetch_user_id_or_create(innohassle_id)
-            if user_id is None:
+            if user_id is None: 
+                logger.warning("User_Id not found")               
                 raise credentials_exception
             return UserTokenData(user_id=user_id, innohassle_id=innohassle_id)
         except JoseError as e:
+            logger.error(f"JoseError: {e}")
             raise credentials_exception

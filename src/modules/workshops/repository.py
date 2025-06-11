@@ -10,13 +10,13 @@ from src.storages.sql.models.users import User
 from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.logging import logger
 
 
 class WorkshopRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    # TODO: Check whether it should return none
     async def create_workshop(self, workshop: CreateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
         db_workshop = Workshop.model_validate(workshop)
 
@@ -34,11 +34,15 @@ class WorkshopRepository:
     async def get_workshop_by_id(self, workshop_id: str) -> Workshop | None:
         query = select(Workshop).where(Workshop.id == workshop_id)
         result = await self.session.execute(query)
-        return result.scalars().first()
+        workshop = result.scalars().first()
+        if workshop is None:
+            logger.warning("Workshop not found.")
+        return workshop
 
     async def update_workshop(self, workshop_id: str, workshop_update: UpdateWorkshopScheme) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
         if workshop:
+            logger.info(f"Updating workshop data. Current data: {workshop}")
             workshop_dump = workshop_update.model_dump()
             for key, value in workshop_dump.items():
                 if value is not None:
@@ -47,6 +51,8 @@ class WorkshopRepository:
             self.session.add(workshop)
             await self.session.commit()
             await self.session.refresh(workshop)
+
+            logger.info(f"Updated workshop data. New data: {workshop}")
 
             return workshop
 
