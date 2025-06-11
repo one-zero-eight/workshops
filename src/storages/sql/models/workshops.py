@@ -39,7 +39,7 @@ class Workshop(SQLModel, table=True):
     capacity: int = Field(ge=0, default=500)
 
     "Number of places still available; cannot exceed capacity"
-    remain_places: int = Field(default=501, ge=0)
+    remain_places: int = Field(default=500, ge=0)
 
     "Marks whether the workshop is currently active"
     is_active: Optional[bool] = False
@@ -54,7 +54,7 @@ class Workshop(SQLModel, table=True):
     @field_validator("remain_places")
     def clamp_remain_places(cls, remain_places, values):
         capacity = values.data["capacity"]
-        if remain_places > capacity:
+        if remain_places >= capacity:
             return capacity
         return remain_places
 

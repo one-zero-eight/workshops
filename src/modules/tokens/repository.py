@@ -58,17 +58,14 @@ class TokenRepository:
         
             # TODO: Эта строчка блять всё может сломать чек чек
             innohassle_id: str = payload.get("uid")  # type:ignore
-            
-            logger.info(payload)
 
             logger.info(f"uid == None: {payload.get("uid") == None}.\n")
-            # if innohassle_id is None:
-            #     innohassle_id = payload.get("scope")  # type:ignore
-            #     logger.warning(f"scope == None: {payload.get("scope") == None} Used service token.")
-            #     if innohassle_id is None:
-            #         raise credentials_exception
-            #     innohassle_id = innohassle_id[6:]
-
+            if innohassle_id is None:
+                innohassle_id = payload.get("scope")  # type:ignore
+                logger.warning(f"scope == None: {payload.get("scope") == None} Used service token.")
+                if innohassle_id is None:
+                    raise credentials_exception
+                innohassle_id = innohassle_id[6:]
 
             user_id = await self.fetch_user_id_or_create(innohassle_id)
             if user_id is None: 

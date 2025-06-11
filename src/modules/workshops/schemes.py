@@ -10,8 +10,8 @@ from typing import Optional
 class CreateWorkshopScheme(SQLModel):
     name: str
     description: str
-    capacity: int
-    remain_places: Optional[int] = 501
+    capacity: Optional[int] = 500
+    remain_places: Optional[int] = 500
     place: str
 
     dtstart: datetime
