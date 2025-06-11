@@ -16,6 +16,8 @@ class CreateWorkshopScheme(SQLModel):
 
     dtstart: datetime
     dtend: datetime
+    
+    is_active: Optional[bool] = False
 
     @model_validator(mode="after")
     def validate_time(self):
@@ -33,6 +35,7 @@ class ReadWorkshopScheme(SQLModel):
     place: Optional[str]
     capacity: int
     remain_places: int
+    is_active: bool
 
 
 class UpdateWorkshopScheme(SQLModel):
