@@ -1,13 +1,10 @@
 # autodrop_sqlmodel.py
-from sqlmodel import SQLModel, create_engine
+from sqlmodel import SQLModel
 import os
-from dotenv import load_dotenv
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.storages.sql.models.users import User
-from src.storages.sql.models.workshops import Workshop, WorkshopCheckin
 
 
 from src.config import settings
@@ -15,6 +12,10 @@ from src.config import settings
 import asyncio
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
+
+# Do not remove here these imports 
+from src.storages.sql.models.workshops import Workshop, WorkshopCheckin
+from src.storages.sql.models.users import User
 
 engine = create_async_engine(settings.database_uri._secret_value, echo=True)
 
