@@ -28,4 +28,5 @@ class User(SQLModel, table=True):
     role: UserRole = Field(default=UserRole.user)
 
     "All checkins for specific user "
-    checkins: List["WorkshopCheckin"] = Relationship(back_populates="user")
+    checkins: List["WorkshopCheckin"] = Relationship(
+        back_populates="user",     sa_relationship_kwargs={"cascade": "all, delete-orphan"})

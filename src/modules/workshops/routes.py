@@ -149,7 +149,7 @@ async def checkin_user(
     check_in_status = await checkin_repo.create_checkIn(user.id, workshop_id)
 
     if check_in_status != CheckInEnum.SUCCESS:
-        logger.error(f"Failed during checking in user. Status: {status}")
+        logger.error(f"Failed during checking in user. Status: {check_in_status}")
         raise HTTPException(status_code=404, detail=check_in_status.value)
 
     return Response(status_code=status.HTTP_200_OK)
