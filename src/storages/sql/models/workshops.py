@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlmodel import Relationship, SQLModel, Field
 
@@ -42,8 +42,11 @@ class Workshop(SQLModel, table=True):
     "Number of places still available; cannot exceed capacity"
     remain_places: int = Field(default=500, ge=0)
 
-    "Marks whether the workshop is currently active"
+    "Marks whether the workshop is currently active (visible for users)"
     is_active: Optional[bool] = False
+
+    "Marks whether users can register to the workshop"
+    is_registrable: Optional[bool] = False
 
     "List of check-in records associated with this workshop"
     checkins: List["WorkshopCheckin"] = Relationship(

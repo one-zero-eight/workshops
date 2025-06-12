@@ -49,6 +49,7 @@ create_data = [
         dtstart=now + timedelta(days=3, hours=10),
         dtend=now + timedelta(days=3, hours=12),
         is_active=False,
+        is_registrable=True
     ),
 ]
 

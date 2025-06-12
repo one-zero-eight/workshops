@@ -1,4 +1,4 @@
-from sqlmodel import select
+from sqlmodel import select, update
 from typing import Sequence
 
 from datetime import datetime, timedelta
@@ -17,6 +17,16 @@ class WorkshopRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def _update_is_registrable_flag(self):
+        offset = datetime.now() + timedelta(days=1)
+        stmt = (
+            update(Workshop)
+            .where(Workshop.dtstart < offset) # type: ignore
+            .values(is_registrable=True)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
     async def create_workshop(self, workshop: CreateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
         db_workshop = Workshop.model_validate(workshop)
 
@@ -27,6 +37,8 @@ class WorkshopRepository:
         return db_workshop, WorkshopEnum.CREATED
 
     async def get_all_workshops(self, limit: int = 100) -> Sequence[Workshop]:
+        await self._update_is_registrable_flag()
+
         query = select(Workshop)
         result = await self.session.execute(query.limit(limit=limit))
         return result.scalars().all()
@@ -108,7 +120,6 @@ class CheckInRepository:
         if workshop.dtstart >= datetime.now() + timedelta(days=1):
             return CheckInEnum.INVALID_TIME
 
-        # TODO: Fix bug here with checking in
         if await self.exists_checkin(user_id, workshop_id):
             return CheckInEnum.ALREADY_CHECKED_IN
 

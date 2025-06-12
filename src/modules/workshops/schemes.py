@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlmodel import SQLModel
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 
 from typing import Optional
 
@@ -16,8 +16,9 @@ class CreateWorkshopScheme(SQLModel):
 
     dtstart: datetime
     dtend: datetime
-    
+
     is_active: Optional[bool] = False
+    is_registrable: Optional[bool] = False
 
     @model_validator(mode="after")
     def validate_time(self):
@@ -36,6 +37,7 @@ class ReadWorkshopScheme(SQLModel):
     capacity: int
     remain_places: int
     is_active: bool
+    is_registrable: bool
 
 
 class UpdateWorkshopScheme(SQLModel):
@@ -46,3 +48,4 @@ class UpdateWorkshopScheme(SQLModel):
     place: Optional[str] = None
     capacity: Optional[int] = None
     is_active: Optional[bool] = None
+    is_registrable: Optional[bool] = None
