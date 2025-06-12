@@ -12,7 +12,7 @@ from src.logging import logger
 
 
 engine = create_async_engine(
-    url=settings.database_uri._secret_value,
+    url=settings.database_uri,
     # echo=True
 )
 
