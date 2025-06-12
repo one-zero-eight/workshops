@@ -11,7 +11,7 @@ config = dotenv_values(".env")
 class Accounts(BaseModel):
     """InNoHassle Accounts integration settings"""
     api_url: str = "https://api.innohassle.ru/accounts/v0"
-    api_jwt_token: str = config["API_JWT_TOKEN"]
+    api_jwt_token: str = config["API_JWT_TOKEN"] #type:ignore
 
 
 class Settings(BaseModel):
