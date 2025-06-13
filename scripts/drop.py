@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from src.storages.sql.models.workshops import Workshop, WorkshopCheckin
 from src.storages.sql.models.users import User
 
-engine = create_async_engine(settings.database_uri._secret_value, echo=True)
+engine = create_async_engine(settings.database_uri, echo=True)
 
 async def drop_all():
     print("Dropping all (students from uni) tables...")
