@@ -39,16 +39,6 @@ class TokenRepository:
             return user_id
 
         logger.info("User not found. Attempting to create user")
-
-        # innohassle_user = await innohassle_accounts.get_user_by_id(innohassle_id)
-        # if innohassle_user is None:
-        #     return None
-
-        # user = CreateUserScheme(
-        #     innohassle_id=innohassle_id,
-        #     email=innohassle_user.innopolis_sso.email,  # type: ignore
-        #     name=innohassle_user.innopolis_sso.name,  # type: ignore
-        # )
         
         user = CreateUserScheme(
             innohassle_id=innohassle_id,
