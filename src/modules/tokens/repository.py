@@ -56,7 +56,6 @@ class TokenRepository:
         try:
             payload = self.decode_token(token)
         
-            # TODO: Эта строчка блять всё может сломать чек чек
             innohassle_id: str = payload.get("uid")  # type:ignore
 
             logger.info(f"uid == None: {payload.get("uid") == None}.\n")

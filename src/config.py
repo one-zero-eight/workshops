@@ -17,10 +17,9 @@ class Accounts(BaseModel):
 class Settings(BaseModel):
     """Settings for the application."""
     app_root_path: str = ""
-    database_uri: str = config["DATABASE_URI"]
-    is_prod: bool = config["IS_PROD"]
+    database_uri: str = config["DATABASE_URI"] # type: ignore
+    is_prod: bool = config["IS_PROD"] # type: ignore
 
-    # TODO: recheck
     cors_allow_origin_regex: str = "https://.*.innohassle.ru"
     accounts: Accounts = Accounts()
 

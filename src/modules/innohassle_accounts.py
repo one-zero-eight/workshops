@@ -41,13 +41,6 @@ class InNoHassleAccounts:
             jwks_json = response.json()
             return JsonWebKey.import_key_set(jwks_json)
 
-    async def get_key_setNEW(self):
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.api_url}/.well-known/jwks.json")
-            response.raise_for_status()
-            jwks_json = response.json()
-            return jwks_json
-
     def get_authorized_client(self) -> httpx.AsyncClient:
         return httpx.AsyncClient(headers={"Authorization": f"Bearer {self.api_jwt_token}"}, base_url=self.api_url)
 
