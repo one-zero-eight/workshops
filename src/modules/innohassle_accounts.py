@@ -41,19 +41,19 @@ class InNoHassleAccounts:
             jwks_json = response.json()
             return JsonWebKey.import_key_set(jwks_json)
 
-    def get_authorized_client(self) -> httpx.AsyncClient:
-        return httpx.AsyncClient(headers={"Authorization": f"Bearer {self.api_jwt_token}"}, base_url=self.api_url)
+    # def get_authorized_client(self) -> httpx.AsyncClient:
+    #     return httpx.AsyncClient(headers={"Authorization": f"Bearer {self.api_jwt_token}"}, base_url=self.api_url)
 
-    async def get_user_by_id(self, innohassle_id: str) -> UserSchema | None:
-        async with self.get_authorized_client() as client:
-            response = await client.get(f"/users/by-id/{innohassle_id}")
-            try:
-                response.raise_for_status()
-                return UserSchema.model_validate(response.json())
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == 404:
-                    return None
-                raise e
+    # async def get_user_by_id(self, innohassle_id: str) -> UserSchema | None:
+    #     async with self.get_authorized_client() as client:
+    #         response = await client.get(f"/users/by-id/{innohassle_id}")
+    #         try:
+    #             response.raise_for_status()
+    #             return UserSchema.model_validate(response.json())
+    #         except httpx.HTTPStatusError as e:
+    #             if e.response.status_code == 404:
+    #                 return None
+    #             raise e
 
 
 innohassle_accounts = InNoHassleAccounts(

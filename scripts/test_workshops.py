@@ -16,7 +16,7 @@ from sqlmodel import SQLModel, insert
 
 
 
-engine = create_async_engine(settings.database_uri._secret_value, echo=True)
+engine = create_async_engine(settings.database_uri, echo=True)
 
 now = datetime.now()
 create_data = [
