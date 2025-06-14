@@ -45,7 +45,6 @@ async def get_all_workshops(
     *,
     workshop_repo: WorkshopRepositoryDep,
     limit: int = 100,
-    _: CurrentUserIdDep,
 ):
     workshops = await workshop_repo.get_all_workshops(limit)
     return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
