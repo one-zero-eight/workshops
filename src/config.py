@@ -16,7 +16,7 @@ class Accounts(BaseModel):
 
 class Settings(BaseModel):
     """Settings for the application."""
-    app_root_path: str = "/api"
+    app_root_path: str = ""
     database_uri: str = config["DATABASE_URI"]
     is_prod: bool = config["IS_PROD"]
 
