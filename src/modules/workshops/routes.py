@@ -49,7 +49,7 @@ async def get_all_workshops(
     workshops = await workshop_repo.get_all_workshops(limit)
     return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
 
-#TODO: Add enums for updates
+
 @router.put("/{workshop_id}",
             responses={
                 status.HTTP_200_OK: {"description": "Workshop updated successfully"},
@@ -63,11 +63,11 @@ async def update_workshop(
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
 ):
-    updatedWorkshop = await workshop_repo.update_workshop(workshop_id, workshop)
+    updatedWorkshop, status = await workshop_repo.update_workshop(workshop_id, workshop)
     if not updatedWorkshop:
-        raise HTTPException(status_code=404, detail="Workshop not found")
+        raise HTTPException(status_code=404, detail=status.value)
 
-    return {"message": "Workshop updated successfully"}
+    return {"message": status}
 
 
 @router.post("/{workshop_id}/activate",
@@ -148,7 +148,8 @@ async def checkin_user(
     check_in_status = await checkin_repo.create_checkIn(user.id, workshop_id)
 
     if check_in_status != CheckInEnum.SUCCESS:
-        logger.error(f"Failed during checking in user. Status: {check_in_status}")
+        logger.error(
+            f"Failed during checking in user. Status: {check_in_status}")
         raise HTTPException(status_code=404, detail=check_in_status.value)
 
     return Response(status_code=status.HTTP_200_OK)

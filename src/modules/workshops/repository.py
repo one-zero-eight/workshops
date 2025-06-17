@@ -21,7 +21,7 @@ class WorkshopRepository:
         offset = datetime.now() + timedelta(days=1)
         stmt = (
             update(Workshop)
-            .where(Workshop.dtstart < offset) # type: ignore
+            .where(Workshop.dtstart < offset)  # type: ignore
             .values(is_registrable=True)
         )
         await self.session.execute(stmt)
@@ -51,24 +51,34 @@ class WorkshopRepository:
             logger.warning("Workshop not found.")
         return workshop
 
-    async def update_workshop(self, workshop_id: str, workshop_update: UpdateWorkshopScheme) -> Workshop | None:
+    async def update_workshop(self, workshop_id: str, workshop_update: UpdateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
         workshop = await self.get_workshop_by_id(workshop_id)
-        if workshop:
-            logger.info(f"Updating workshop data. Current data: {workshop}")
-            workshop_dump = workshop_update.model_dump()
-            for key, value in workshop_dump.items():
-                if value is not None:
-                    setattr(workshop, key, value)
+        if not workshop:
+            return None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST
 
-            self.session.add(workshop)
-            await self.session.commit()
-            await self.session.refresh(workshop)
+        logger.info(f"Updating workshop data. Current data: {workshop}")
+        workshop_dump = workshop_update.model_dump()
 
-            logger.info(f"Updated workshop data. New data: {workshop}")
+        # Check that current number of checked in users is not greater than new capacity
+        if workshop_dump['capacity'] != None and workshop_dump['capacity'] < workshop.capacity - workshop.remain_places:
+            return None, WorkshopEnum.INVALID_CAPACITY_FOR_UPDATE
 
-            return workshop
+        # Recalculating the "remain_places" value
+        if workshop_dump['capacity'] != None:
+            workshop.remain_places = workshop.remain_places - \
+                (workshop.capacity - workshop_dump['capacity'])
 
-        return None
+        for key, value in workshop_dump.items():
+            if value is not None:
+                setattr(workshop, key, value)
+
+        self.session.add(workshop)
+        await self.session.commit()
+        await self.session.refresh(workshop)
+
+        logger.info(f"Updated workshop data. New data: {workshop}")
+
+        return workshop, WorkshopEnum.UPDATED
 
     async def change_active_status_workshop(self, workshop_id: str, active: bool) -> Workshop | None:
         workshop = await self.get_workshop_by_id(workshop_id)
