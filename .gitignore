@@ -7,3 +7,4 @@ index.html
 setting.yaml
 .idea
 logs/
+.pytest_cache

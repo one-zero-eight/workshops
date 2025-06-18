@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlmodel import SQLModel
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 
 from typing import Optional
 
@@ -25,6 +25,14 @@ class CreateWorkshopScheme(SQLModel):
         if self.dtstart >= self.dtend:
             raise ValueError("`dtstart` must be less than `dtend`")
         return self
+
+    @field_validator("dtstart")
+    def remove_microseconds_dtstart(cls, dtstart):
+        return dtstart.replace(microsecond=0) 
+    
+    @field_validator("dtstart")
+    def remove_microseconds_dtend(cls, dtend):
+        return dtend.replace(microsecond=0) 
 
 
 class ReadWorkshopScheme(SQLModel):

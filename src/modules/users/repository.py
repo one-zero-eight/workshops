@@ -25,11 +25,11 @@ class UsersRepository:
         await self.session.refresh(user)
 
         return user
-
-    # async def read_by_email(self, user_email: str) -> User | None:
-    #     query = select(User).where(User.email == user_email)
-    #     user = await self.session.execute(query)
-    #     return user.scalars().first()
+    
+    async def delete(self, user: User):
+        await self.session.delete(user)
+        await self.session.commit()
+        
 
     async def read_by_id(self, user_id: str) -> User | None:
         logger.info(user_id)
