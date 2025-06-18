@@ -122,9 +122,9 @@ async def delete_workshop(workshop_id: str,
     status = await workshop_repo.delete_workshop(workshop_id)
     if status != WorkshopEnum.DELETED:
         logger.error(f"Failed during deleting workshop. Status: {status}")
-        raise HTTPException(status_code=404, detail="Workshop not found")
+        raise HTTPException(status_code=404, detail=status.value)
 
-    return {"message": "Workshop deleted successfully"}
+    return {"message": WorkshopEnum.DELETED.value}
 
 
 @router.post("/{workshop_id}/checkin",
@@ -150,6 +150,7 @@ async def checkin_user(
     if check_in_status != CheckInEnum.SUCCESS:
         logger.error(
             f"Failed during checking in user. Status: {check_in_status}")
+        "TODO: Technically this code should be changed 500"
         raise HTTPException(status_code=404, detail=check_in_status.value)
 
     return Response(status_code=status.HTTP_200_OK)

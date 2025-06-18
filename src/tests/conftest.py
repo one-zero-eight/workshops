@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
+from fastapi.testclient import TestClient
 import pytest_asyncio
+from src.api import app
 from src.config import settings
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -8,7 +10,9 @@ from src.modules.workshops.repository import WorkshopRepository, CheckInReposito
 from src.modules.users.repository import UsersRepository
 from src.modules.workshops.schemes import CreateWorkshopScheme, UpdateWorkshopScheme
 from src.modules.users.schemes import CreateUserScheme
+from src.storages.sql.models.users import User
 
+from src.storages.sql.models.users import UserRole
 #TODO: Need to rewrite scope of fixtures as now everything is created each time it's kinda bad
 
 @pytest_asyncio.fixture(loop_scope="function")
@@ -80,6 +84,12 @@ async def add_workshop_and_clean(create_workshop_data, getWorkshopRepository):
 
     await getWorkshopRepository.delete_workshop(workshop.id)
 
+@pytest_asyncio.fixture(loop_scope="function")
+async def add_user_and_workshop_clean(add_workshop_and_clean, add_user_and_clean):
+    workshop = add_workshop_and_clean
+    user = add_user_and_clean
+    return workshop, user
+
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def add_checkin_and_clean(getWorkshopCheckinRepository, add_workshop_and_clean, getWorkshopRepository, add_user_and_clean):
@@ -94,4 +104,21 @@ async def add_checkin_and_clean(getWorkshopCheckinRepository, add_workshop_and_c
 
     yield user, workshop
 
-    await getWorkshopRepository.delete_workshop(workshop.id)
+    await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
+
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def admin_dep(create_user_data):
+    # user = create_user_data
+    # user.role = UserRole.admin
+    return create_user_data
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def current_user_id_dep():
+    return "some_user_id"
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def get_client():
+    client = TestClient(app.app)
+    return client 
