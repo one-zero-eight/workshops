@@ -72,6 +72,7 @@ class WorkshopRepository:
             if value is not None:
                 setattr(workshop, key, value)
 
+
         self.session.add(workshop)
         await self.session.commit()
         await self.session.refresh(workshop)

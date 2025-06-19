@@ -26,9 +26,11 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -e .
 ```
 
-5. Create setting.yaml. Check out setting.example.yaml for more details
+5. Create .env. Check out .example.env. for more details
 
-6. To finally start: 
+6. Create directory logs in the root of the project
+
+7. To finally start: 
 ```bash
 uv run src/api/__main__.py
 ```

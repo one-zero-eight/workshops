@@ -30,7 +30,7 @@ class CreateWorkshopScheme(SQLModel):
     def remove_microseconds_dtstart(cls, dtstart):
         return dtstart.replace(microsecond=0) 
     
-    @field_validator("dtstart")
+    @field_validator("dtend")
     def remove_microseconds_dtend(cls, dtend):
         return dtend.replace(microsecond=0) 
 

@@ -6,14 +6,15 @@ from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
 from src.storages.sql.models.users import User
 from src.storages.sql.models.workshops import Workshop
 
+# TODO: ENhance test and recheck them
+# TODO: Add integrational tests (how?)
+
 
 class TestWorkshops:
     @pytest.mark.asyncio
     async def test_create_workshop(self, add_workshop_and_clean):
         assert add_workshop_and_clean.id is not None
         assert add_workshop_and_clean.name == "name"
-
-    '''TODO: Cancel out all data (workshop) creation to fixtures'''
 
     @pytest.mark.asyncio
     async def test_get_all_workshops(self, getWorkshopRepository, add_workshop_and_clean):
@@ -81,11 +82,10 @@ class TestWorkshopCheckIn:
         user = add_user_and_clean
 
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, f"{workshop.id}_wrong")
-        
+
         assert status == CheckInEnum.WORKSHOP_DOES_NOT_EXIST
 
-        await getWorkshopRepository.delete_workshop(workshop.id)
-
+        await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
     async def test_create_checkIn_not_active(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
@@ -96,7 +96,7 @@ class TestWorkshopCheckIn:
 
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
         assert status == CheckInEnum.NOT_ACTIVE
-        
+
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
@@ -108,7 +108,7 @@ class TestWorkshopCheckIn:
 
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
         assert status == CheckInEnum.NO_PLACES
-        
+
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
@@ -120,7 +120,7 @@ class TestWorkshopCheckIn:
 
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
         assert status == CheckInEnum.INVALID_TIME
-        
+
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
@@ -129,11 +129,11 @@ class TestWorkshopCheckIn:
         user = add_user_and_clean
 
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
-        
+
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
-        
+
         assert status == CheckInEnum.ALREADY_CHECKED_IN
-        
+
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
@@ -141,25 +141,25 @@ class TestWorkshopCheckIn:
         workshop = add_workshop_and_clean
         user = add_user_and_clean
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
-        
-        
+
         overlapping_data = create_workshop_data.copy()
         overlapping_data.dtstart = workshop.dtstart
         overlapping_data.dtend = workshop.dtend
         overlapping_data.name = "Name"
         overlapping_data.is_active = True
-        # overlapping_data["dtstart"] = workshop.dtstart  
-        # overlapping_data["dtend"] = workshop.dtend      
-        # overlapping_data["name"] = "Overlapping Workshop"    
-        
+        # overlapping_data["dtstart"] = workshop.dtstart
+        # overlapping_data["dtend"] = workshop.dtend
+        # overlapping_data["name"] = "Overlapping Workshop"
+
         second_workshop, status = await getWorkshopRepository.create_workshop(overlapping_data)
         assert status == WorkshopEnum.CREATED
 
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, second_workshop.id)
-        
+
         assert status == CheckInEnum.OVERLAPPING_WORKSHOPS
-        
+
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
+        await getWorkshopRepository.delete_workshop(second_workshop.id)
 
     @pytest.mark.asyncio
     async def test_exists_checkin(self, getWorkshopCheckinRepository):
@@ -190,12 +190,3 @@ class TestWorkshopCheckIn:
         status = await getWorkshopCheckinRepository.remove_checkIn(user.id, f"{workshop.id}_wrong")
 
         assert status == CheckInEnum.WORKSHOP_DOES_NOT_EXIST
-
-    # @pytest.mark.asyncio
-    # async def test_remove_checkIn_not_exists(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
-    #     workshop = add_workshop_and_clean
-    #     user = add_user_and_clean
-
-    #     status = await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
-
-    #     assert status == CheckInEnum.CHECK_IN_DOES_NOT_EXIST
