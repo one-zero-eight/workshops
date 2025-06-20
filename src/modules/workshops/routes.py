@@ -193,4 +193,4 @@ async def get_all_check_ins(
         raise HTTPException(
             status_code=404, detail="No check-ins found for this workshop")
 
-    return [user.email for user in users]
+    return [ReadWorkshopScheme.model_validate(user) for user in users]
