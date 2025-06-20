@@ -20,6 +20,13 @@ class CreateWorkshopScheme(SQLModel):
     is_active: Optional[bool] = False
     is_registrable: Optional[bool] = False
 
+    @model_validator(mode="before")
+    def validate_workshops_in_the_past(self):
+        current_time = datetime.now()
+        if current_time > self.dtstart:
+            raise ValueError("Cannot create workshops in the past")
+        return self
+
     @model_validator(mode="after")
     def validate_time(self):
         if self.dtstart >= self.dtend:
