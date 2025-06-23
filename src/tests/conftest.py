@@ -42,14 +42,14 @@ async def create_user_data():
 @pytest_asyncio.fixture(loop_scope="function")
 async def create_workshop_data():
     create_data = CreateWorkshopScheme(name="name", description="description",
-                                       place="place", dtstart=datetime.now(), dtend=datetime.now() + timedelta(days=1), is_active=False)
+                                       place="place", dtstart=datetime.now() + timedelta(minutes=1), dtend=datetime.now() + timedelta(days=1), is_active=False)
     return create_data
 
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def update_workshop_data():
     update_data = UpdateWorkshopScheme(name="name_updated", description="description_updated",
-                                       place="place_updated", dtstart=datetime.now(), dtend=datetime.now() + timedelta(days=1))
+                                       place="place_updated", dtstart=datetime.now() + timedelta(minutes=1), dtend=datetime.now() + timedelta(days=1))
     return update_data
 
 

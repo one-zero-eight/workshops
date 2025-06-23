@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock
+from uuid import uuid4
 import pytest
 
 from src.modules.workshops.enums import WorkshopEnum
@@ -9,6 +10,7 @@ from src.storages.sql.models.workshops import Workshop
 '''Need to change: 
     Token reading so accept always
     Reading bd to get'''
+
 
 @pytest.mark.asyncio
 async def test_add_workshop_succes(admin_dep, create_workshop_data):
@@ -179,3 +181,41 @@ async def test_get_all_check_ins_empty(admin_dep):
     with pytest.raises(HTTPException) as exc:
         await get_all_check_ins("wid", admin_dep, mock_checkin_repo)
     assert exc.value.status_code == 404
+
+
+# @pytest.mark.asyncio
+# async def test_get_all_check_ins(admin_dep):
+#     mock_checkin_repo = AsyncMock()
+#     mock_checkin_repo.get_checked_in_users_for_workshop.return_value = []
+
+#     with pytest.raises(HTTPException) as exc:
+#         await get_all_check_ins("wid", admin_dep, mock_checkin_repo)
+#     assert exc.value.status_code == 404
+    
+
+@pytest.mark.asyncio
+async def test_get_all_check_ins_with_email(admin_dep):
+    mock_checkin_repo = AsyncMock()
+
+    user1 = User(
+        id=str(uuid4()),
+        innohassle_id="id2",
+        role="user",
+        checkins=[],
+        email="user1@example.com"  # FIELD NOT YET IMPLEMENTED
+    )
+    user2 = User(
+        id=str(uuid4()),
+        innohassle_id="id1",
+        role="user",
+        checkins=[],
+        email="user2@example.com"
+    )
+
+    mock_checkin_repo.get_checked_in_users_for_workshop.return_value = [user1, user2]
+
+    result = await get_all_check_ins("wid", admin_dep, mock_checkin_repo)
+
+    assert all(hasattr(user, "email") for user in result)
+    assert result[0].email == "user1@example.com"
+    assert result[1].email == "user2@example.com"
