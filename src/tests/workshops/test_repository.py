@@ -147,9 +147,6 @@ class TestWorkshopCheckIn:
         overlapping_data.dtend = workshop.dtend
         overlapping_data.name = "Name"
         overlapping_data.is_active = True
-        # overlapping_data["dtstart"] = workshop.dtstart
-        # overlapping_data["dtend"] = workshop.dtend
-        # overlapping_data["name"] = "Overlapping Workshop"
 
         second_workshop, status = await getWorkshopRepository.create_workshop(overlapping_data)
         assert status == WorkshopEnum.CREATED

@@ -21,10 +21,13 @@ class WorkshopRepository:
         offset = datetime.now() + timedelta(days=1)
         stmt = (
             update(Workshop)
+            .where(Workshop.dtstart >= datetime.now())  # type: ignore
             .where(Workshop.dtstart < offset)  # type: ignore
             .values(is_registrable=True)
         )
+
         await self.session.execute(stmt)
+
         await self.session.commit()
 
     async def create_workshop(self, workshop: CreateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
@@ -71,7 +74,6 @@ class WorkshopRepository:
         for key, value in workshop_dump.items():
             if value is not None:
                 setattr(workshop, key, value)
-
 
         self.session.add(workshop)
         await self.session.commit()
