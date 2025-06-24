@@ -1,0 +1,24 @@
+meta {
+  name: Add workshop
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9000/api/workshops
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Python Basics",
+    "description": "Introductory course on Python",
+    "dtstart": "2025-06-21T08:41:57",
+    "dtend": "2025-06-200:41:57",
+    "place": "Room A",
+    "capacity": 10,
+    "is_active": false,
+    "is_registrable": true
+  }
+}

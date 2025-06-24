@@ -1,0 +1,26 @@
+meta {
+  name: Update workshops
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://localhost:9000/api/workshops/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 3a0f1f92-d446-4469-bec3-146737e42973
+}
+
+body:json {
+  {
+    "name": "Advanced AI Workshop",
+    "description": "Hands-on workshop covering advanced AI models.",
+    "dtstart": "2025-07-01T10:00:00",
+    "dtend": "2025-07-01T15:00:00",
+    "place": "Room 204, Engineering Building",
+    "capacity": 40
+  }
+}

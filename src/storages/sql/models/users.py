@@ -28,3 +28,5 @@ class User(SQLModel, table=True):
     "All checkins for specific user "
     checkins: List["WorkshopCheckin"] = Relationship(
         back_populates="user",     sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+
+    email: str = Field(default=None)

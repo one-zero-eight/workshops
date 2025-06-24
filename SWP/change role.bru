@@ -1,0 +1,15 @@
+meta {
+  name: change role
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:9000/users/change_role?role=admin
+  body: none
+  auth: inherit
+}
+
+params:query {
+  role: admin
+}
