@@ -1,13 +1,11 @@
 from pathlib import Path
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from src.config import settings
+from config import settings
 
 import uvicorn
-
-
 
 # Change dir to project root (three levels up from this file)
 os.chdir(Path(__file__).parents[2])
