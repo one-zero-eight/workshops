@@ -181,7 +181,7 @@ async def checkout_user(
     return Response(status_code=status.HTTP_200_OK)
 
 
-@router.get("/{workshop_id}/checkins")
+@router.get("/{workshop_id}/checkins", response_model=List[ViewUserScheme])
 async def get_all_check_ins(
     workshop_id: str,
     user: AdminDep,
