@@ -1,14 +1,16 @@
+import uvicorn
 from pathlib import Path
+
 import sys
 import os
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from config import settings
+sys.path.append(os.path.abspath(os.path.join(
+    os.path.dirname(__file__), "..", "..")))
 
-import uvicorn
+from src.config import settings
 
 # Change dir to project root (three levels up from this file)
-os.chdir(Path(__file__).parents[2])
+# os.chdir(Path(__file__).parents[2])
 # Get arguments from command
 args = sys.argv[1:]
 
@@ -35,4 +37,3 @@ if __name__ == "__main__":
             "--reload",
             *args
         ])
-
