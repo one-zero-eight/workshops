@@ -184,7 +184,7 @@ async def checkout_user(
 @router.get("/{workshop_id}/checkins", response_model=List[ViewUserScheme])
 async def get_all_check_ins(
     workshop_id: str,
-    user: AdminDep,
+    # user: AdminDep,
     checkin_repo: CheckInRepositoryDep,
 ):
     users = await checkin_repo.get_checked_in_users_for_workshop(workshop_id)
