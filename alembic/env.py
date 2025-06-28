@@ -7,7 +7,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from src.storages.sql.models.users import User
 from src.storages.sql.models.workshops import Workshop, WorkshopCheckin
-#NOTE: Make sure that every new model imported here
+
+# NOTE: Make sure that every new model imported here
 
 from alembic import context
 
@@ -19,9 +20,9 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-    
+
 env_values = dotenv_values(".env")
-config.set_main_option("sqlalchemy.url", env_values["DATABASE_URI"]) # type: ignore
+config.set_main_option("sqlalchemy.url", env_values["DATABASE_URI"])  # type: ignore
 
 
 # add your model's MetaData object here
@@ -29,6 +30,7 @@ config.set_main_option("sqlalchemy.url", env_values["DATABASE_URI"]) # type: ign
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from sqlmodel import SQLModel
+
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,

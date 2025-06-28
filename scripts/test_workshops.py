@@ -15,7 +15,6 @@ from src.config import settings
 from sqlmodel import SQLModel, insert
 
 
-
 engine = create_async_engine(settings.database_uri, echo=True)
 
 now = datetime.now()
@@ -49,13 +48,14 @@ create_data = [
         dtstart=now + timedelta(days=3, hours=10),
         dtend=now + timedelta(days=3, hours=12),
         is_active=False,
-        is_registrable=True
+        is_registrable=True,
     ),
 ]
 
 workshops: list[Workshop] = [Workshop.model_validate(data) for data in create_data]
 
 print(workshops)
+
 
 async def create_test_workshops():
     print("Creating 3 new workshops...")
@@ -66,6 +66,7 @@ async def create_test_workshops():
             await conn.execute(ins)
         await conn.commit()
     print("3 workshops sucessfully added")
+
 
 if __name__ == "__main__":
     asyncio.run(create_test_workshops())

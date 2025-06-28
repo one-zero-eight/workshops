@@ -17,7 +17,9 @@ class TestWorkshops:
         assert add_workshop_and_clean.name == "name"
 
     @pytest.mark.asyncio
-    async def test_get_all_workshops(self, getWorkshopRepository, add_workshop_and_clean):
+    async def test_get_all_workshops(
+        self, getWorkshopRepository, add_workshop_and_clean
+    ):
         repo = getWorkshopRepository
 
         workshop = add_workshop_and_clean
@@ -27,7 +29,9 @@ class TestWorkshops:
         # assert workshops[-1].dtstart/ == workshop.dtstart
 
     @pytest.mark.asyncio
-    async def test_get_workshop_by_id(self, getWorkshopRepository, add_workshop_and_clean):
+    async def test_get_workshop_by_id(
+        self, getWorkshopRepository, add_workshop_and_clean
+    ):
         repo = getWorkshopRepository
 
         added_workshop = add_workshop_and_clean
@@ -36,22 +40,30 @@ class TestWorkshops:
         assert added_workshop == workshop
 
     @pytest.mark.asyncio
-    async def test_update_workshop(self, update_workshop_data, getWorkshopRepository, add_workshop_and_clean):
+    async def test_update_workshop(
+        self, update_workshop_data, getWorkshopRepository, add_workshop_and_clean
+    ):
         repo = getWorkshopRepository
 
         added_workshop = add_workshop_and_clean
-        workshop_updated, status = await repo.update_workshop(added_workshop.id, update_workshop_data)
+        workshop_updated, status = await repo.update_workshop(
+            added_workshop.id, update_workshop_data
+        )
 
         assert status == WorkshopEnum.UPDATED
         assert workshop_updated.name == update_workshop_data.name
         assert added_workshop.id == workshop_updated.id
 
     @pytest.mark.asyncio
-    async def test_change_active_status_workshop(self, getWorkshopRepository, add_workshop_and_clean):
+    async def test_change_active_status_workshop(
+        self, getWorkshopRepository, add_workshop_and_clean
+    ):
         repo = getWorkshopRepository
 
         added_workshop = add_workshop_and_clean
-        workshop_changed = await repo.change_active_status_workshop(added_workshop.id, True)
+        workshop_changed = await repo.change_active_status_workshop(
+            added_workshop.id, True
+        )
 
         assert workshop_changed.is_active == True
 
@@ -77,18 +89,28 @@ class TestWorkshopCheckIn:
         assert self.workshop.remain_places == self.workshop.capacity - 1  # type: ignore
 
     @pytest.mark.asyncio
-    async def test_create_checkIn_not_exists(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository, getWorkshopRepository):
+    async def test_create_checkIn_not_exists(
+        self,
+        add_workshop_and_clean,
+        add_user_and_clean,
+        getWorkshopCheckinRepository,
+        getWorkshopRepository,
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
 
-        status = await getWorkshopCheckinRepository.create_checkIn(user.id, f"{workshop.id}_wrong")
+        status = await getWorkshopCheckinRepository.create_checkIn(
+            user.id, f"{workshop.id}_wrong"
+        )
 
         assert status == CheckInEnum.WORKSHOP_DOES_NOT_EXIST
 
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
-    async def test_create_checkIn_not_active(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
+    async def test_create_checkIn_not_active(
+        self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
 
@@ -100,7 +122,9 @@ class TestWorkshopCheckIn:
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
-    async def test_create_checkIn_no_places(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
+    async def test_create_checkIn_no_places(
+        self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
 
@@ -112,7 +136,9 @@ class TestWorkshopCheckIn:
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
-    async def test_create_checkIn_invalid_time(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
+    async def test_create_checkIn_invalid_time(
+        self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
 
@@ -124,7 +150,9 @@ class TestWorkshopCheckIn:
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
-    async def test_create_checkIn_already_checked_in(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
+    async def test_create_checkIn_already_checked_in(
+        self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
 
@@ -137,7 +165,14 @@ class TestWorkshopCheckIn:
         await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
 
     @pytest.mark.asyncio
-    async def test_create_checkIn_overlapping_workshops(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository, create_workshop_data, getWorkshopRepository):
+    async def test_create_checkIn_overlapping_workshops(
+        self,
+        add_workshop_and_clean,
+        add_user_and_clean,
+        getWorkshopCheckinRepository,
+        create_workshop_data,
+        getWorkshopRepository,
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
         status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
@@ -148,10 +183,14 @@ class TestWorkshopCheckIn:
         overlapping_data.name = "Name"
         overlapping_data.is_active = True
 
-        second_workshop, status = await getWorkshopRepository.create_workshop(overlapping_data)
+        second_workshop, status = await getWorkshopRepository.create_workshop(
+            overlapping_data
+        )
         assert status == WorkshopEnum.CREATED
 
-        status = await getWorkshopCheckinRepository.create_checkIn(user.id, second_workshop.id)
+        status = await getWorkshopCheckinRepository.create_checkIn(
+            user.id, second_workshop.id
+        )
 
         assert status == CheckInEnum.OVERLAPPING_WORKSHOPS
 
@@ -160,30 +199,50 @@ class TestWorkshopCheckIn:
 
     @pytest.mark.asyncio
     async def test_exists_checkin(self, getWorkshopCheckinRepository):
-        exists = await getWorkshopCheckinRepository.exists_checkin(self.user.id, self.workshop.id)
+        exists = await getWorkshopCheckinRepository.exists_checkin(
+            self.user.id, self.workshop.id
+        )
         assert exists == True
 
     @pytest.mark.asyncio
-    async def test_get_checked_in_workshops_for_user(self, getWorkshopCheckinRepository):
-        workshops = await getWorkshopCheckinRepository.get_checked_in_workshops_for_user(self.user.id)
+    async def test_get_checked_in_workshops_for_user(
+        self, getWorkshopCheckinRepository
+    ):
+        workshops = (
+            await getWorkshopCheckinRepository.get_checked_in_workshops_for_user(
+                self.user.id
+            )
+        )
         assert self.workshop in workshops
 
     @pytest.mark.asyncio
-    async def test_get_checked_in_users_for_workshop(self, getWorkshopCheckinRepository):
-        users = await getWorkshopCheckinRepository.get_checked_in_users_for_workshop(self.workshop.id)
+    async def test_get_checked_in_users_for_workshop(
+        self, getWorkshopCheckinRepository
+    ):
+        users = await getWorkshopCheckinRepository.get_checked_in_users_for_workshop(
+            self.workshop.id
+        )
         assert self.user in users
 
     @pytest.mark.asyncio
     async def test_remove_checkIn_success(self, getWorkshopCheckinRepository):
-        await getWorkshopCheckinRepository.create_checkIn(self.user.id, self.workshop.id)
-        remove_status = await getWorkshopCheckinRepository.remove_checkIn(self.user.id, self.workshop.id)
+        await getWorkshopCheckinRepository.create_checkIn(
+            self.user.id, self.workshop.id
+        )
+        remove_status = await getWorkshopCheckinRepository.remove_checkIn(
+            self.user.id, self.workshop.id
+        )
         assert remove_status == CheckInEnum.SUCCESS
 
     @pytest.mark.asyncio
-    async def test_remove_checkIn_workshop_not_exists(self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository):
+    async def test_remove_checkIn_workshop_not_exists(
+        self, add_workshop_and_clean, add_user_and_clean, getWorkshopCheckinRepository
+    ):
         workshop = add_workshop_and_clean
         user = add_user_and_clean
 
-        status = await getWorkshopCheckinRepository.remove_checkIn(user.id, f"{workshop.id}_wrong")
+        status = await getWorkshopCheckinRepository.remove_checkIn(
+            user.id, f"{workshop.id}_wrong"
+        )
 
         assert status == CheckInEnum.WORKSHOP_DOES_NOT_EXIST

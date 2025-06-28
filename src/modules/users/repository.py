@@ -25,11 +25,10 @@ class UsersRepository:
         await self.session.refresh(user)
 
         return user
-    
+
     async def delete(self, user: User):
         await self.session.delete(user)
         await self.session.commit()
-        
 
     async def read_by_id(self, user_id: str) -> User | None:
         logger.info(user_id)

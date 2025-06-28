@@ -9,7 +9,7 @@ VERSION = "0.1.0"
 TITLE = "Workshops API"
 SUMMARY = "Workshops API | InNoHassle ecosystem for InNoHassle ecosystem."
 
-#TODO: Add description
+# TODO: Add description
 DESCRIPTION = "None"
 
 CONTACT_INFO = {

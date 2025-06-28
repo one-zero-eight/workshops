@@ -16,10 +16,10 @@ load_dotenv()
 router = APIRouter(prefix="/users")
 
 
-@router.get("/me",
-            responses={200: {"description": "Current user info"}}
-            )
-async def get_me(user_id: CurrentUserIdDep, user_repository: UsersRepositoryDep) -> User | None:
+@router.get("/me", responses={200: {"description": "Current user info"}})
+async def get_me(
+    user_id: CurrentUserIdDep, user_repository: UsersRepositoryDep
+) -> User | None:
     """
     Get current user info if authenticated
     """
@@ -27,46 +27,46 @@ async def get_me(user_id: CurrentUserIdDep, user_repository: UsersRepositoryDep)
     return user
 
 
-@router.get("/my_checkins",
-            response_model=List[ReadWorkshopScheme],
-            responses={
-                status.HTTP_200_OK: {"description": "User's check-ins retrieved successfully"},
-                status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
-            })
+@router.get(
+    "/my_checkins",
+    response_model=List[ReadWorkshopScheme],
+    responses={
+        status.HTTP_200_OK: {"description": "User's check-ins retrieved successfully"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+    },
+)
 async def get_my_checkins(
     checkin_repo: CheckInRepositoryDep,
     user_id: CurrentUserIdDep,
-    user_repo: UsersRepositoryDep
+    user_repo: UsersRepositoryDep,
 ):
     user = await user_repo.read_by_id(user_id)  # type: ignore
     if user is None:
-        raise HTTPException(
-            status_code=500, detail="User not found")
+        raise HTTPException(status_code=500, detail="User not found")
 
     workshops = await checkin_repo.get_checked_in_workshops_for_user(user.id)
     if not workshops:
-        raise HTTPException(
-            status_code=404, detail="No check-ins found for this user")
+        raise HTTPException(status_code=404, detail="No check-ins found for this user")
     return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
+
 
 # TODO: REMOVE IN THE FUTURE
 
 
-@router.post("/change_role",
-             responses={
-                 status.HTTP_200_OK: {"description": "Changed role succesfully"},
-                 status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
-                 status.HTTP_404_NOT_FOUND: {"description": "Failed during changing role"},
-             })
+@router.post(
+    "/change_role",
+    responses={
+        status.HTTP_200_OK: {"description": "Changed role succesfully"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_404_NOT_FOUND: {"description": "Failed during changing role"},
+    },
+)
 async def change_role(
-    role: str,
-    users_repo: UsersRepositoryDep,
-    user_id: CurrentUserIdDep
+    role: str, users_repo: UsersRepositoryDep, user_id: CurrentUserIdDep
 ):
     user = await users_repo.read_by_id(user_id)  # type: ignore
     if user is None:
-        raise HTTPException(
-            status_code=500, detail="User not found")
+        raise HTTPException(status_code=500, detail="User not found")
 
     userChanged = await users_repo.change_role_of_user(user.id, role)
     if not userChanged:

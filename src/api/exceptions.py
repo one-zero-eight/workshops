@@ -30,7 +30,7 @@ class IncorrectCredentialsException(CustomHTTPException):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=self.responses[401]["description"],
             )
-            
 
     responses = {
-        401: {"description": "Unable to verify credentials OR Credentials not provided"}}
+        401: {"description": "Unable to verify credentials OR Credentials not provided"}
+    }

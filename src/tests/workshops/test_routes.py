@@ -7,9 +7,9 @@ from src.modules.workshops.routes import *
 from src.storages.sql.models.users import User, UserRole
 from src.storages.sql.models.workshops import Workshop
 
-'''Need to change: 
+"""Need to change: 
     Token reading so accept always
-    Reading bd to get'''
+    Reading bd to get"""
 
 
 @pytest.mark.asyncio
@@ -18,7 +18,9 @@ async def test_add_workshop_succes(admin_dep, create_workshop_data):
     workshop = Workshop.model_validate(create_workshop_data)
 
     mock_repo.create_workshop.return_value = (workshop, WorkshopEnum.CREATED)
-    result = await add_workshop(workshop_repo=mock_repo, workshop_create=create_workshop_data, _=admin_dep)
+    result = await add_workshop(
+        workshop_repo=mock_repo, workshop_create=create_workshop_data, _=admin_dep
+    )
 
     assert ReadWorkshopScheme.model_validate(workshop) == result
 
@@ -29,9 +31,13 @@ async def test_add_workshop_fail(admin_dep, create_workshop_data):
     workshop = Workshop.model_validate(create_workshop_data)
 
     mock_repo.create_workshop.return_value = (
-        workshop, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST)
+        workshop,
+        WorkshopEnum.WORKSHOP_DOES_NOT_EXIST,
+    )
     with pytest.raises(HTTPException) as exc_info:
-        await add_workshop(workshop_repo=mock_repo, workshop_create=create_workshop_data, _=admin_dep)
+        await add_workshop(
+            workshop_repo=mock_repo, workshop_create=create_workshop_data, _=admin_dep
+        )
 
     assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -40,7 +46,8 @@ async def test_add_workshop_fail(admin_dep, create_workshop_data):
 async def test_get_all_workshops(create_workshop_data):
     mock_repo = AsyncMock()
     mock_repo.get_all_workshops.return_value = [
-        Workshop.model_validate(create_workshop_data)]
+        Workshop.model_validate(create_workshop_data)
+    ]
 
     result = await get_all_workshops(workshop_repo=mock_repo)
     assert len(result) == 1
@@ -51,7 +58,9 @@ async def test_get_all_workshops(create_workshop_data):
 async def test_update_workshop_success(create_workshop_data, admin_dep):
     mock_repo = AsyncMock()
     mock_repo.update_workshop.return_value = (
-        Workshop.model_validate(create_workshop_data), WorkshopEnum.UPDATED)
+        Workshop.model_validate(create_workshop_data),
+        WorkshopEnum.UPDATED,
+    )
 
     result = await update_workshop("id", create_workshop_data, admin_dep, mock_repo)
     assert result["message"] == WorkshopEnum.UPDATED
@@ -61,7 +70,9 @@ async def test_update_workshop_success(create_workshop_data, admin_dep):
 async def test_update_workshop_not_found(create_workshop_data, admin_dep):
     mock_repo = AsyncMock()
     mock_repo.update_workshop.return_value = (
-        None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST)
+        None,
+        WorkshopEnum.WORKSHOP_DOES_NOT_EXIST,
+    )
 
     with pytest.raises(HTTPException) as exc:
         await update_workshop("id", create_workshop_data, admin_dep, mock_repo)
@@ -127,7 +138,8 @@ async def test_checkin_user_success():
     mock_checkin_repo = AsyncMock()
     mock_user_repo = AsyncMock()
     mock_user_repo.read_by_id.return_value = User(
-        innohassle_id="some_id", role=UserRole.user)
+        innohassle_id="some_id", role=UserRole.user
+    )
     mock_checkin_repo.create_checkIn.return_value = CheckInEnum.SUCCESS
 
     response = await checkin_user("wid", "uid", mock_checkin_repo, mock_user_repo)
@@ -139,7 +151,8 @@ async def test_checkin_user_fail():
     mock_checkin_repo = AsyncMock()
     mock_user_repo = AsyncMock()
     mock_user_repo.read_by_id.return_value = User(
-        innohassle_id="some_id", role=UserRole.user)
+        innohassle_id="some_id", role=UserRole.user
+    )
     mock_checkin_repo.create_checkIn.return_value = CheckInEnum.INVALID_TIME
 
     with pytest.raises(HTTPException) as exc:
@@ -153,7 +166,8 @@ async def test_checkout_user_success():
     mock_checkin_repo = AsyncMock()
     mock_user_repo = AsyncMock()
     mock_user_repo.read_by_id.return_value = User(
-        innohassle_id="some_id", role=UserRole.user)
+        innohassle_id="some_id", role=UserRole.user
+    )
     mock_checkin_repo.remove_checkIn.return_value = CheckInEnum.SUCCESS
 
     response = await checkout_user("wid", mock_checkin_repo, "uid", mock_user_repo)
@@ -165,7 +179,8 @@ async def test_checkout_user_not_found():
     mock_checkin_repo = AsyncMock()
     mock_user_repo = AsyncMock()
     mock_user_repo.read_by_id.return_value = User(
-        innohassle_id="some_id", role=UserRole.user)
+        innohassle_id="some_id", role=UserRole.user
+    )
     mock_checkin_repo.remove_checkIn.return_value = CheckInEnum.CHECK_IN_DOES_NOT_EXIST
 
     with pytest.raises(HTTPException) as exc:
@@ -191,7 +206,7 @@ async def test_get_all_check_ins_empty(admin_dep):
 #     with pytest.raises(HTTPException) as exc:
 #         await get_all_check_ins("wid", admin_dep, mock_checkin_repo)
 #     assert exc.value.status_code == 404
-    
+
 
 @pytest.mark.asyncio
 async def test_get_all_check_ins_with_email(admin_dep):
@@ -202,14 +217,14 @@ async def test_get_all_check_ins_with_email(admin_dep):
         innohassle_id="id2",
         role="user",
         checkins=[],
-        email="user1@example.com"  # FIELD NOT YET IMPLEMENTED
+        email="user1@example.com",  # FIELD NOT YET IMPLEMENTED
     )
     user2 = User(
         id=str(uuid4()),
         innohassle_id="id1",
         role="user",
         checkins=[],
-        email="user2@example.com"
+        email="user2@example.com",
     )
 
     mock_checkin_repo.get_checked_in_users_for_workshop.return_value = [user1, user2]

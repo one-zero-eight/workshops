@@ -1,4 +1,3 @@
-
 from fastapi import Depends
 from typing import Annotated
 
@@ -16,8 +15,7 @@ engine = create_async_engine(
     # echo=True
 )
 
-async_session = async_sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False)
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def create_db_and_table():
@@ -30,5 +28,6 @@ async def get_session():
     # ensures that db is opened and closed per request
     async with async_session() as session:
         yield session
+
 
 DbSessionDep = Annotated[AsyncSession, Depends(get_session)]

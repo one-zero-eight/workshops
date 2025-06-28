@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class CheckInEnum(Enum):
     SUCCESS = "Success"
     NOT_ACTIVE = "Workshop is not active"
@@ -14,6 +15,8 @@ class CheckInEnum(Enum):
 class WorkshopEnum(Enum):
     CREATED = "Succesfully created the workshop"
     UPDATED = "Succesfully updated the workshop"
-    INVALID_CAPACITY_FOR_UPDATE = "Capacity cannot be less than current number of checked in users"
+    INVALID_CAPACITY_FOR_UPDATE = (
+        "Capacity cannot be less than current number of checked in users"
+    )
     WORKSHOP_DOES_NOT_EXIST = "Workshop does not exist"
     DELETED = "Succesfully updated the workshop"

@@ -17,13 +17,17 @@ bearer_scheme = HTTPBearer(
 
 
 async def get_current_user_id(
-    token_repository: TokenRepositoryDep, bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)
+    token_repository: TokenRepositoryDep,
+    bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> str:
     # Prefer header to cookie
     token = bearer and bearer.credentials
     if not token:
         raise IncorrectCredentialsException(no_credentials=True)
-    token_data = await token_repository.verify_user_token(token, IncorrectCredentialsException())
+    token_data = await token_repository.verify_user_token(
+        token, IncorrectCredentialsException()
+    )
     return token_data.user_id
+
 
 CurrentUserIdDep = Annotated[str, Depends(get_current_user_id)]

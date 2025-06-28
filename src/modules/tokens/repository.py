@@ -39,7 +39,7 @@ class TokenRepository:
             return user_id
 
         logger.info(f"User {innohassle_id} was not found. Attempting to create user")
-        
+
         user = CreateUserScheme(
             innohassle_id=innohassle_id,
             email=email,
@@ -47,16 +47,20 @@ class TokenRepository:
         user_id = (await self.user_repository.create(user)).id
         return user_id
 
-    async def verify_user_token(self, token: str, credentials_exception) -> UserTokenData:
+    async def verify_user_token(
+        self, token: str, credentials_exception
+    ) -> UserTokenData:
         try:
             payload = self.decode_token(token)
-        
+
             innohassle_id: str = payload.get("uid")  # type:ignore
 
             logger.info(f"uid == None: {payload.get("uid") is None}.")
             if innohassle_id is None:
                 innohassle_id = payload.get("scope")  # type:ignore
-                logger.warning(f"scope == None: {payload.get("scope") is None}. Used service token.")
+                logger.warning(
+                    f"scope == None: {payload.get("scope") is None}. Used service token."
+                )
                 if innohassle_id is None:
                     raise credentials_exception
                 innohassle_id = innohassle_id[6:]
@@ -68,11 +72,13 @@ class TokenRepository:
                 raise credentials_exception
 
             user_id = await self.fetch_user_id_or_create(innohassle_id, email)
-            if user_id is None: 
-                logger.warning("User_Id not found")               
+            if user_id is None:
+                logger.warning("User_Id not found")
                 raise credentials_exception
 
-            return UserTokenData(user_id=user_id, innohassle_id=innohassle_id, email=email)
+            return UserTokenData(
+                user_id=user_id, innohassle_id=innohassle_id, email=email
+            )
         except JoseError as e:
             logger.error(f"JoseError: {e}")
             raise credentials_exception

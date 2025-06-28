@@ -35,11 +35,11 @@ class CreateWorkshopScheme(SQLModel):
 
     @field_validator("dtstart")
     def remove_microseconds_dtstart(cls, dtstart):
-        return dtstart.replace(microsecond=0) 
-    
+        return dtstart.replace(microsecond=0)
+
     @field_validator("dtend")
     def remove_microseconds_dtend(cls, dtend):
-        return dtend.replace(microsecond=0) 
+        return dtend.replace(microsecond=0)
 
 
 class ReadWorkshopScheme(SQLModel):
@@ -64,11 +64,10 @@ class UpdateWorkshopScheme(SQLModel):
     capacity: Optional[int] = None
     is_active: Optional[bool] = None
     is_registrable: Optional[bool] = None
-    
+
     @model_validator(mode="after")
     def validate_time(self):
         if self.dtstart is not None and self.dtend is not None:
-            if self.dtstart >= self.dtend: 
+            if self.dtstart >= self.dtend:
                 raise ValueError("`dtstart` must be less than `dtend`")
         return self
-    

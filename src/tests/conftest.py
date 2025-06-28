@@ -13,6 +13,7 @@ from src.modules.users.schemes import CreateUserScheme
 from src.storages.sql.models.users import User
 
 from src.storages.sql.models.users import UserRole
+
 # TODO: Need to rewrite scope of fixtures as now everything is created each time it's kinda bad
 
 
@@ -25,7 +26,8 @@ async def session_db_connection():
     )
 
     async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False)
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with async_session() as session:
@@ -35,21 +37,34 @@ async def session_db_connection():
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def create_user_data():
-    user = CreateUserScheme(innohassle_id="some_innohassle_id", email="user@example.com")
+    user = CreateUserScheme(
+        innohassle_id="some_innohassle_id", email="user@example.com"
+    )
     return user
 
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def create_workshop_data():
-    create_data = CreateWorkshopScheme(name="name", description="description",
-                                       place="place", dtstart=datetime.now() + timedelta(minutes=1), dtend=datetime.now() + timedelta(days=1), is_active=False)
+    create_data = CreateWorkshopScheme(
+        name="name",
+        description="description",
+        place="place",
+        dtstart=datetime.now() + timedelta(minutes=1),
+        dtend=datetime.now() + timedelta(days=1),
+        is_active=False,
+    )
     return create_data
 
 
 @pytest_asyncio.fixture(loop_scope="function")
 async def update_workshop_data():
-    update_data = UpdateWorkshopScheme(name="name_updated", description="description_updated",
-                                       place="place_updated", dtstart=datetime.now() + timedelta(minutes=1), dtend=datetime.now() + timedelta(days=1))
+    update_data = UpdateWorkshopScheme(
+        name="name_updated",
+        description="description_updated",
+        place="place_updated",
+        dtstart=datetime.now() + timedelta(minutes=1),
+        dtend=datetime.now() + timedelta(days=1),
+    )
     return update_data
 
 
@@ -94,7 +109,12 @@ async def add_user_and_workshop_clean(add_workshop_and_clean, add_user_and_clean
 
 
 @pytest_asyncio.fixture(loop_scope="function")
-async def add_checkin_and_clean(getWorkshopCheckinRepository, add_workshop_and_clean, getWorkshopRepository, add_user_and_clean):
+async def add_checkin_and_clean(
+    getWorkshopCheckinRepository,
+    add_workshop_and_clean,
+    getWorkshopRepository,
+    add_user_and_clean,
+):
     workshop = add_workshop_and_clean
     workshop.is_active = True
 
