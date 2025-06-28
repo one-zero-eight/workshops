@@ -30,9 +30,31 @@ jobs:
           uv run black . --check --diff
 
   test:
-    name: Run Tests with uv
+    name: Run Tests with uv and PostgreSQL
     runs-on: ubuntu-latest
     needs: lint
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: username
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U username"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      API_JWT_TOKEN: ${{ secrets.API_JWT_TOKEN }}
+      DATABASE_URI: postgresql+asyncpg://username:password@127.0.0.1:5432/db
+      SECRET_KEY: "SOMEKEY"
+      TOKEN_EXPIRE_TIME: 60
+      IS_PROD: Prod
+
     steps:
       - uses: actions/checkout@v4
 
@@ -66,7 +88,15 @@ jobs:
             cd ${{ secrets.BACKEND_REPO_PATH }}
             git stash
             git pull origin main
+
+            export API_JWT_TOKEN="${{ secrets.API_JWT_TOKEN }}"
+            export DATABASE_URI="postgresql+asyncpg://username:password@127.0.0.1:5432/db"
+            export IS_PROD=true
+            export SECRET_KEY="SOMEKEY"
+            export TOKEN_EXPIRE_TIME=60
+
             source venv/bin/activate
             pip install uv
             uv pip install -e .
+
             sudo systemctl restart backend.service
