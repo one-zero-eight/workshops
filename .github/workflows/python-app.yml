@@ -21,13 +21,12 @@ jobs:
         with:
           python-version: "3.13.4"
 
-      - name: Install uv and black
+      - name: Install uv and create virtual environment
         run: |
           pip install uv
+          uv venv
+          source .venv/bin/activate
           uv pip install black
-
-      - name: Run black (check formatting)
-        run: |
           uv run black . --check --diff
 
   test:
@@ -42,14 +41,13 @@ jobs:
         with:
           python-version: "3.13.4"
 
-      - name: Install dependencies and pytest using uv
+      - name: Install dependencies and run tests
         run: |
           pip install uv
+          uv venv
+          source .venv/bin/activate
           uv pip install -e .
           uv pip install pytest
-
-      - name: Run pytest with uv
-        run: |
           uv run pytest
 
   deploy:
