@@ -187,6 +187,7 @@ async def test_checkout_user_not_found():
         await checkout_user("wid", mock_checkin_repo, "uid", mock_user_repo)
     assert exc.value.status_code == 404
 
+
 # @pytest.mark.asyncio
 # async def test_get_all_check_ins_empty(admin_dep):
 #     mock_checkin_repo = AsyncMock()
