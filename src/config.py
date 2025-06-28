@@ -1,11 +1,13 @@
-from enum import StrEnum
-
+import os
 
 from dotenv import dotenv_values
 from pydantic import BaseModel
 
+dotenv_config = dotenv_values(".env")
+os_env = dict(os.environ)
 
-config = dotenv_values(".env")
+# Merging configs
+config = {**os_env, **dotenv_config}
 
 
 class Accounts(BaseModel):
