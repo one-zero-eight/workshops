@@ -6,6 +6,6 @@ tasks.db
 index.html
 setting.yaml
 .idea
-logs/*
+logs/app.log
 .pytest_cache
 SWP
