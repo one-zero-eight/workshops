@@ -12,7 +12,7 @@ from src.modules.workshops.dependencies import WorkshopRepositoryDep, CheckInRep
 from src.modules.users.dependencies import UsersRepositoryDep
 from src.logging import logger
 
-router = APIRouter(prefix="/api/workshops")
+router = APIRouter(prefix="/workshops")
 
 
 @router.post("/",
