@@ -83,6 +83,10 @@ class WorkshopRepository:
             if value is not None:
                 setattr(workshop, key, value)
 
+        offset = datetime.now() + timedelta(days=1)
+        if workshop.dtstart > offset:
+            workshop.is_registrable = False
+
         self.session.add(workshop)
         await self.session.commit()
         await self.session.refresh(workshop)
@@ -142,6 +146,8 @@ class CheckInRepository:
             return CheckInEnum.NO_PLACES
         if workshop.dtstart >= datetime.now() + timedelta(days=1):
             return CheckInEnum.INVALID_TIME
+        if workshop.dtstart < datetime.now():
+            return CheckInEnum.TIME_IS_OVER
 
         if await self.exists_checkin(user_id, workshop_id):
             return CheckInEnum.ALREADY_CHECKED_IN
