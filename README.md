@@ -195,7 +195,7 @@ Our CI pipeline is defined in [.github/workflows/python-app.yml](.github/workflo
 - **TestClient**: FastAPI endpoint testing
 
 #### CI Workflow Runs
-View all CI workflow runs at: [GitHub Actions](https://github.com/tomatoCoderq/workshops_api/actions)
+View all CI workflow runs at: [GitHub Actions](https://github.com/InNoHassle-Workshops-Check-In/backend/actions)
 
 ### Continuous Deployment
 
