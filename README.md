@@ -36,8 +36,8 @@ uv run src/api/__main__.py
 
 ## Development
 
-### Kanban board
-Our Kanban board is hosted on GitHub Projects: [WorkshopsAPI Kanban Board](https://github.com/orgs/tomatoCoderq/projects/1)
+### Scrum board
+Our board is hosted on GitHub Projects: [WorkshopsAPI](https://github.com/orgs/InNoHassle-Workshops-Check-In/projects/3/views/1)
 
 #### Column Entry Criteria
 
@@ -103,7 +103,6 @@ Format: `type(scope): description`
 - Example: `feat(auth): add JWT token validation`
 
 #### Pull Requests
-- **Creating PRs**: Use the [Pull Request Template](https://github.com/tomatoCoderq/workshops_api/blob/main/.github/pull_request_template.md)
 - **Description**: Include issue number, description of changes, and testing notes
 - **Reviewers**: Assign at least one team member for review
 
@@ -124,7 +123,7 @@ Format: `type(scope): description`
 - **Documentation**: Update relevant documentation if needed
 
 #### Git Workflow Diagram
-![image](/images/GitGraph.png)
+![image](/docs/architecture/static-view/GitGraph.png)
 
 ### Secrets management
 
@@ -220,7 +219,7 @@ Our CD pipeline is integrated into the CI workflow and automatically deploys to 
 Our architecture follows a layered approach with clear separation of concerns:
 
 #### Component Diagram
-![image](/images/AppArch.png)
+![Component Diagram](docs/architecture/static-view/AppArch.png)
 
 #### Coupling and Cohesion
 - **Low Coupling**: Modules are loosely coupled through dependency injection
@@ -237,7 +236,7 @@ Our architecture follows a layered approach with clear separation of concerns:
 ### Dynamic view
 
 #### Sequence Diagram: Workshop Check-in Process
-![image](/images/DynamicView.png)
+![Workshop Check-in Sequence](docs/architecture/dynamic-view/DynamicView.png)
 
 #### Performance Measurement
 The workshop check-in process typically completes in **150-300ms** in production, including:
@@ -246,9 +245,8 @@ The workshop check-in process typically completes in **150-300ms** in production
 - Network overhead: 80-150ms
 
 ### Deployment view
-
 #### Deployment Architecture
-![image](images/DeployArch.png)
+![Deployment Architecture](docs/architecture/deployment-view/DeployArch.png)
 
 #### Deployment Choices
 - **Containerization**: Ready for Docker deployment
