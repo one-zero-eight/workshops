@@ -1,263 +1,261 @@
-# WorkshopsAPI | Backend for summer team project
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
+<a id="readme-top"></a>
+<!--
+*** Thanks for checking out the Best-README-Template. If you have a suggestion
+*** that would make this better, please fork the repo and create a pull request
+*** or simply open an issue with the tag "enhancement".
+*** Don't forget to give the project a star!
+*** Thanks again! Now go create something AMAZING! :D
+-->
 
-## About
-Backend part for summer team project. FastAPI + PostgreSQL
 
-## How to start
-0. Python >= 3.13 && PostgreSQL >= 15
-1. Clone project
-```bash
-git clone https://github.com/tomatoCoderq/workshops_api
-cd workshops_api
-```
-2. Download uv (package manager as Poetry and pip)
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh #Windows: powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
 
-3. Create venv 
-```bash
-uv venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-4. Install dependencies
-```bash
-uv pip install -e .
-```
+<!-- PROJECT SHIELDS -->
+<!--
+*** I'm using markdown "reference style" links for readability.
+*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
+*** See the bottom of this document for the declaration of the reference variables
+*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![Unlicense License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
-5. Create .env. Check out .example.env. for more details
 
-6. Create directory logs in the root of the project
 
-7. To finally start: 
-```bash
-uv run src/api/__main__.py
-```
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/InNoHassle-Workshops-Check-In/backend">
+    <img src="https://avatars.githubusercontent.com/u/215998499?s=48&v=4" alt="Logo" width="80" height="80">
+  </a>
 
-## Development
+  <h3 align="center">InNoHassle Workshops Backend</h3>
 
-### Scrum board
-Our board is hosted on GitHub Projects: [WorkshopsAPI](https://github.com/orgs/InNoHassle-Workshops-Check-In/projects/3/views/1)
+  <p align="center">
+    Information about InNoHassle workshops backend. 
+    <br />
+    <a href="https://github.com/InNoHassle-Workshops-Check-In/backend"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://workshops.innohassle.ru">View Demo</a>
+    &middot;
+    <a href="https://github.com/InNoHassle-Workshops-Check-In/backend/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    &middot;
+    <a href="https://github.com/InNoHassle-Workshops-Check-In/backend/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+  </p>
+</div>
 
-#### Column Entry Criteria
 
-**Backlog**
-- New features, bugs, or improvements identified
-- Requirements are clearly defined
-- Acceptance criteria are specified
-- Priority level is assigned
 
-**To Do**
-- Issue is fully analyzed and understood
-- Technical approach is defined
-- Story points are estimated
-- Dependencies are identified
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-**In Progress**
-- Issue is assigned to a team member
-- Branch is created and work has started
-- Code implementation is actively being developed
 
-**Review**
-- Code is complete and ready for review
-- Pull request is created with proper description
-- All automated tests pass
-- Code follows project standards
 
-**Done**
-- Code review is approved by at least one team member
-- All tests pass in CI/CD pipeline
-- Code is merged to main branch
-- Issue is closed and documented
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-### Git workflow
+[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
-We follow a **GitHub Flow** workflow adapted to our team's needs:
+There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
 
-#### Base Workflow
-We adapted the **GitHub Flow** workflow, which is a lightweight, branch-based workflow that supports teams and projects where deployments are made regularly.
+Here's why:
+* Your time should be focused on creating something amazing. A project that solves a problem and helps others
+* You shouldn't be doing the same tasks over and over like creating a README from scratch
+* You should implement DRY principles to the rest of your life :smile:
 
-#### Issue Management
-- **Creating Issues**: Use predefined issue templates for [Bug Reports](https://github.com/tomatoCoderq/workshops_api/issues/new?template=bug_report.md) and [Feature Requests](https://github.com/tomatoCoderq/workshops_api/issues/new?template=feature_request.md)
-- **Labelling Issues**: 
-  - `bug`: Software defects
-  - `enhancement`: New features or improvements
-  - `documentation`: Documentation updates
-  - `good first issue`: Suitable for new contributors
-  - `help wanted`: Issues needing assistance
-  - `priority: high/medium/low`: Priority levels
-- **Assigning Issues**: Team members self-assign or are assigned by project lead based on expertise and availability
+Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have contributed to expanding this template!
 
-#### Branch Management
-- **Creating Branches**: 
-  - Format: `feature/issue-number-description` or `bugfix/issue-number-description`
-  - Example: `feature/123-user-authentication`
-- **Naming Branches**: Use kebab-case with descriptive names
-- **Base Branch**: Always branch from `main`
+Use the `BLANK_README.md` to get started.
 
-#### Commit Messages
-Format: `type(scope): description`
-- **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-- **Scope**: Optional, describes the part of the codebase affected
-- **Description**: Brief description in present tense
-- Example: `feat(auth): add JWT token validation`
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-#### Pull Requests
-- **Description**: Include issue number, description of changes, and testing notes
-- **Reviewers**: Assign at least one team member for review
 
-#### Code Reviews
-- **Review Process**: All PRs require at least one approval
-- **Review Criteria**: Code quality, functionality, test coverage, documentation
-- **Review Comments**: Be constructive and specific
-- **Review Time**: Aim for review within 24 hours
 
-#### Merging Pull Requests
-- **Merge Strategy**: Squash and merge to maintain clean history
-- **Requirements**: All CI checks must pass, at least one approval
-- **Auto-deployment**: Merges to main trigger automatic deployment
+### Built With
 
-#### Issue Resolution
-- **Closing Issues**: Link PRs to issues using keywords (fixes #123)
-- **Verification**: Ensure the implemented solution meets acceptance criteria
-- **Documentation**: Update relevant documentation if needed
+This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
-#### Git Workflow Diagram
-![image](/docs/architecture/static-view/GitGraph.png)
+* [![React][React.js]][React-url]
+* [![JQuery][JQuery.com]][JQuery-url]
 
-### Secrets management
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-We follow strict security practices for managing sensitive information:
 
-#### Secret Storage
-- **Environment Variables**: All secrets are stored as environment variables
-- **GitHub Secrets**: Production secrets are stored in GitHub repository secrets
-- **Local Development**: Use `.env` file (not committed to git) for local development
-- **CI/CD**: Secrets are injected via GitHub Actions secrets
 
-#### Secret Types
-- **Database Credentials**: PostgreSQL connection strings
-- **JWT Tokens**: Authentication and authorization tokens
-- **API Keys**: External service integrations
-- **Server Credentials**: Deployment server access
+<!-- GETTING STARTED -->
+## Getting Started
 
-#### Security Rules
-- Never commit secrets to version control
-- Use `.env.example` to document required environment variables
-- Rotate secrets regularly
-- Use least privilege principle for access
-- Monitor secret usage and access logs
+This is an example of how you may give instructions on setting up your project locally.
+To get a local copy up and running follow these simple example steps.
 
-## Quality assurance
+### Prerequisites
 
-### Quality attribute scenarios
-Our quality characteristics are documented in [docs/quality-assurance/quality-attribute-scenarios.md](docs/quality-assurance/quality-attribute-scenarios.md).
+This is an example of how to list things you need to use the software and how to install them.
+* npm
+  ```sh
+  npm install npm@latest -g
+  ```
 
-### Automated tests
+### Installation
 
-#### Testing Tools
-- **pytest**: Primary testing framework for unit and integration tests
-- **pytest-asyncio**: Async test support for FastAPI endpoints
-- **pytest-cov**: Code coverage measurement and reporting
-- **TestClient**: FastAPI testing client for endpoint testing
+_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
 
-#### Test Types
-- **Unit Tests**: Test individual functions and classes in isolation
-- **Integration Tests**: Test component interactions and database operations
-- **API Tests**: Test FastAPI endpoints and request/response handling
+1. Get a free API Key at [https://example.com](https://example.com)
+2. Clone the repo
+   ```sh
+   git clone https://github.com/github_username/repo_name.git
+   ```
+3. Install NPM packages
+   ```sh
+   npm install
+   ```
+4. Enter your API in `config.js`
+   ```js
+   const API_KEY = 'ENTER YOUR API';
+   ```
+5. Change git remote url to avoid accidental pushes to base project
+   ```sh
+   git remote set-url origin github_username/repo_name
+   git remote -v # confirm the changes
+   ```
 
-#### Test Locations
-- **Unit Tests**: `src/tests/` directory
-  - `src/tests/users/`: User-related tests
-  - `src/tests/workshops/`: Workshop-related tests
-- **Test Configuration**: `src/tests/conftest.py` contains shared fixtures
-- **Coverage Reports**: Generated in `htmlcov/` directory
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Build and deployment
 
-### Continuous Integration
 
-Our CI pipeline is defined in [.github/workflows/python-app.yml](.github/workflows/python-app.yml).
+<!-- USAGE EXAMPLES -->
+## Usage
 
-#### CI Workflow Steps
-1. **Lint**: Code formatting check with Black
-2. **Test**: Run tests with coverage reporting
-3. **Deploy**: Automatic deployment to production (on main branch)
+Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
 
-#### Static Analysis Tools
-- **Black**: Code formatting and style consistency
-- **pytest**: Test execution and validation
-- **pytest-cov**: Code coverage analysis (minimum 60% threshold)
+_For more examples, please refer to the [Documentation](https://example.com)_
 
-#### Testing Tools
-- **PostgreSQL**: Database testing with containerized PostgreSQL
-- **pytest-asyncio**: Async test execution
-- **TestClient**: FastAPI endpoint testing
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-#### CI Workflow Runs
-View all CI workflow runs at: [GitHub Actions](https://github.com/InNoHassle-Workshops-Check-In/backend/actions)
 
-### Continuous Deployment
 
-Our CD pipeline is integrated into the CI workflow and automatically deploys to production when code is merged to the main branch.
+<!-- ROADMAP -->
+## Roadmap
 
-#### Deployment Process
-1. **Trigger**: Push to main branch
-2. **Prerequisites**: All CI tests must pass
-3. **Deployment**: SSH-based deployment to production server
-4. **Service Restart**: Automatic service restart after deployment
+- [x] Add Changelog
+- [x] Add back to top links
+- [ ] Add Additional Templates w/ Examples
+- [ ] Add "components" document to easily copy & paste sections of the readme
+- [ ] Multi-language Support
+    - [ ] Chinese
+    - [ ] Spanish
 
-#### Deployment Environment
-- **Server**: Production server with SSH access
-- **Service Management**: Systemd service for backend application
-- **Environment**: Production environment variables injected during deployment
+See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
 
-## Architecture
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### Static view
 
-Our architecture follows a layered approach with clear separation of concerns:
 
-#### Component Diagram
-![Component Diagram](docs/architecture/static-view/AppArch.png)
+<!-- CONTRIBUTING -->
+## Contributing
 
-#### Coupling and Cohesion
-- **Low Coupling**: Modules are loosely coupled through dependency injection
-- **High Cohesion**: Related functionality is grouped within modules
-- **Repository Pattern**: Abstracts data access from business logic
-- **Dependency Injection**: Enables easy testing and modularity
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-#### Maintainability Impact
-- **Modular Design**: Easy to add new features without affecting existing code
-- **Clear Interfaces**: Well-defined contracts between layers
-- **Testability**: Each layer can be tested independently
-- **Scalability**: Horizontal scaling possible through stateless design
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Don't forget to give the project a star! Thanks again!
 
-### Dynamic view
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-#### Sequence Diagram: Workshop Check-in Process
-![Workshop Check-in Sequence](docs/architecture/dynamic-view/DynamicView.png)
+### Top contributors:
 
-#### Performance Measurement
-The workshop check-in process typically completes in **150-300ms** in production, including:
-- Database queries: 50-100ms
-- Business logic processing: 20-50ms
-- Network overhead: 80-150ms
+<a href="https://github.com/InNoHassle-Workshops-Check-In/backend/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=othneildrew/Best-README-Template" alt="contrib.rocks image" />
+</a>
 
-### Deployment view
-#### Deployment Architecture
-![Deployment Architecture](docs/architecture/deployment-view/DeployArch.png)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-#### Deployment Choices
-- **Containerization**: Ready for Docker deployment
-- **Stateless Design**: Enables horizontal scaling
-- **Database**: PostgreSQL for ACID compliance and complex queries
-- **Service Management**: Systemd for process management
 
-#### Customer Deployment
-The application can be deployed on the customer's infrastructure using:
-1. **Docker Compose**: For development and small-scale deployments
-2. **Kubernetes**: For production-scale deployments
-3. **Traditional VPS**: Using systemd services and manual deployment
 
-Deployment documentation and scripts are provided in the repository for easy setup.
+<!-- LICENSE -->
+## License
+
+Distributed under the Unlicense License. See `LICENSE.txt` for more information.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CONTACT -->
+## Contact
+
+Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
+
+Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+
+* [Choose an Open Source License](https://choosealicense.com)
+* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
+* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
+* [Malven's Grid Cheatsheet](https://grid.malven.co/)
+* [Img Shields](https://shields.io)
+* [GitHub Pages](https://pages.github.com)
+* [Font Awesome](https://fontawesome.com)
+* [React Icons](https://react-icons.github.io/react-icons/search)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
+[contributors-url]: https://github.com/InNoHassle-Workshops-Check-In/backend/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
+[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
+[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
+[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
+[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
+[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
+[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
+[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://linkedin.com/in/othneildrew
+[product-screenshot]: images/screenshot.png
+[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React-url]: https://reactjs.org/
