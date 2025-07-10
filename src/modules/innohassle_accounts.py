@@ -2,8 +2,17 @@ import datetime
 
 import httpx
 from authlib.jose import JsonWebKey, KeySet
+from pydantic import BaseModel
 
 from src.config import settings
+
+
+class UserTelegram(BaseModel):
+    username: str | None
+
+
+class UserSchema(BaseModel):
+    telegram: UserTelegram | None
 
 
 class InNoHassleAccounts:
@@ -28,6 +37,25 @@ class InNoHassleAccounts:
             response.raise_for_status()
             jwks_json = response.json()
             return JsonWebKey.import_key_set(jwks_json)
+
+    def get_authorized_client(self) -> httpx.AsyncClient:
+        return httpx.AsyncClient(
+            headers={"Authorization": f"Bearer {self.api_jwt_token}"},
+            base_url=self.api_url,
+        )
+
+    async def get_user_alias(self, telegram_id: str) -> UserSchema | None:
+        async with self.get_authorized_client() as client:
+            response = await client.get(f"/users/by-telegram-id/{telegram_id}")
+            response2 = await client.get(f"/users/by-innomail/k.sadykov@innopolis.university")
+            print("REAL", response2.json())
+            try:
+                response.raise_for_status()
+                return UserSchema.model_validate(response.json())
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    return None
+                raise e
 
 
 innohassle_accounts = InNoHassleAccounts(

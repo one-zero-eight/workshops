@@ -22,6 +22,8 @@ class User(SQLModel, table=True):
     id: str = Field(default_factory=generate_uuid_id, primary_key=True)
     "InnoHassle identifier"
     innohassle_id: str = Field(default="someid")
+    "Telegram alias of user. If user is not presented in Innohassle system will be None"
+    t_alias: str = Field(default="None")
 
     role: UserRole = Field(default=UserRole.user)
 

@@ -7,6 +7,7 @@ from src.storages.sql.models.users import UserRole
 class CreateUserScheme(SQLModel):
     innohassle_id: str
     email: str
+    t_alias: str
 
 
 class ViewUserScheme(SQLModel):
@@ -14,3 +15,4 @@ class ViewUserScheme(SQLModel):
     innohassle_id: str
     role: UserRole
     email: str
+    alias: str
