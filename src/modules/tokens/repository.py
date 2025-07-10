@@ -5,7 +5,11 @@ import time
 from authlib.jose import JWTClaims, jwt, JoseError
 
 
-from src.modules.innohassle_accounts import UserSchema, UserTelegram, innohassle_accounts
+from src.modules.innohassle_accounts import (
+    UserSchema,
+    UserTelegram,
+    innohassle_accounts,
+)
 from src.modules.users.repository import UsersRepository
 from src.modules.users.schemes import CreateUserScheme
 from sqlmodel import SQLModel

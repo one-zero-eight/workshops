@@ -47,7 +47,9 @@ class InNoHassleAccounts:
     async def get_user_alias(self, telegram_id: str) -> UserSchema | None:
         async with self.get_authorized_client() as client:
             response = await client.get(f"/users/by-telegram-id/{telegram_id}")
-            response2 = await client.get(f"/users/by-innomail/k.sadykov@innopolis.university")
+            response2 = await client.get(
+                f"/users/by-innomail/k.sadykov@innopolis.university"
+            )
             print("REAL", response2.json())
             try:
                 response.raise_for_status()
