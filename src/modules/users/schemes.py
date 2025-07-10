@@ -15,4 +15,4 @@ class ViewUserScheme(SQLModel):
     innohassle_id: str
     role: UserRole
     email: str
-    alias: str
+    t_alias: str

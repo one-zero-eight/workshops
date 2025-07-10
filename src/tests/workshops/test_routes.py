@@ -214,7 +214,8 @@ async def test_get_all_check_ins_with_email(admin_dep):
         innohassle_id="id2",
         role=UserRole.user,
         checkins=[],
-        email="user1@example.com",  # FIELD NOT YET IMPLEMENTED
+        email="user1@example.com", 
+        t_alias="alias"
     )
     user2 = User(
         id=str(uuid4()),
@@ -222,6 +223,7 @@ async def test_get_all_check_ins_with_email(admin_dep):
         role=UserRole.user,
         checkins=[],
         email="user2@example.com",
+        t_alias="alias"
     )
 
     mock_checkin_repo.get_checked_in_users_for_workshop.return_value = [user1, user2]

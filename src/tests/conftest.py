@@ -38,7 +38,7 @@ async def session_db_connection():
 @pytest_asyncio.fixture(loop_scope="function")
 async def create_user_data():
     user = CreateUserScheme(
-        innohassle_id="some_innohassle_id", email="user@example.com"
+        innohassle_id="some_innohassle_id", email="user@example.com", t_alias="tomatotomoder"
     )
     return user
 
