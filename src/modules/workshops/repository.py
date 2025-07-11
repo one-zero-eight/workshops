@@ -18,7 +18,8 @@ class WorkshopRepository:
         self.session = session
 
     async def _update_is_registrable_flag(self):
-        offset = datetime.now() + timedelta(days=1)
+        now = datetime.now()
+        offset = now + timedelta(days=1)
         stmt = (
             update(Workshop)
             .where(Workshop.dtstart >= datetime.now())  # type: ignore
@@ -27,6 +28,13 @@ class WorkshopRepository:
         )
 
         await self.session.execute(stmt)
+
+        stmt_disable = (
+            update(Workshop)
+            .where(Workshop.dtstart < now)  # type: ignore
+            .values(is_registrable=False)
+        )
+        await self.session.execute(stmt_disable)
 
         await self.session.commit()
 
