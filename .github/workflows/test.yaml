@@ -1,0 +1,57 @@
+name: Test
+
+on: [ push, pull_request ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.1
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    
+    env:
+      SETTINGS_PATH: settings.test.yaml
+    steps:
+      - name: 👾 Check out repository
+        uses: actions/checkout@v4    
+      - name: 📦 Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          activate-environment: true
+      - name: 📦 Install the project
+        run: uv sync --dev
+      - name: 📦 Install pytest dependencies
+        run: uv pip install pytest pytest-cov
+      - name: 📦 Run migrations
+        run: uv run alembic upgrade head
+      - name: 🧪 Run Tests
+        run: uv run pytest
+      - name: 📊 Generate and Check Coverage
+        run: |
+          source .venv/bin/activate
+          # Generate coverage data
+          uv run pytest --cov=. --cov-report=xml --cov-report=html
+          # Check coverage threshold
+          uv run coverage report --fail-under=60
+          # Show detailed report
+          uv run coverage report
+      - name: 📤 Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/

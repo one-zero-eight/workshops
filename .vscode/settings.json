@@ -1,4 +1,17 @@
 {
     "python.analysis.autoImportCompletions": true,
-    "cursorpyright.analysis.autoImportCompletions": true
+    "cursorpyright.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "Localhost 5432",
+            "database": "postgres",
+            "username": "postgres",
+            "password": "postgres"
+        }
+    ]
 }

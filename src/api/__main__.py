@@ -1,45 +1,24 @@
-import uvicorn
-from pathlib import Path
-
-import sys
 import os
+import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from src.prepare import BASE_DIR, prepare
 
-from src.config import settings
+os.chdir(BASE_DIR)
 
-# Change dir to project root (three levels up from this file)
-# os.chdir(Path(__file__).parents[2])
+prepare()
+
+import uvicorn  # noqa: E402
+
 # Get arguments from command
 args = sys.argv[1:]
+extended_args = [
+    "src.api.app:app",
+    "--use-colors",
+    "--proxy-headers",
+    "--forwarded-allow-ips=*",
+    "--port", "8005",
+    *args,
+]
 
-if __name__ == "__main__":
-    print(settings.is_prod)
-    if settings.is_prod == "Prod":
-        uvicorn.main.main(
-            [
-                "src.api.app:app",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "9000",
-                "--use-colors",
-                "--proxy-headers",
-                "--forwarded-allow-ips=*",
-                "--reload",
-                *args,
-            ]
-        )
-    else:
-        uvicorn.main.main(
-            [
-                "src.api.app:app",
-                "--port",
-                "9000",
-                "--use-colors",
-                "--proxy-headers",
-                "--forwarded-allow-ips=*",
-                "--reload",
-                *args,
-            ]
-        )
+print(f"🚀 Starting Uvicorn server: 'uvicorn {" ".join(extended_args)}'")
+uvicorn.main.main(extended_args)

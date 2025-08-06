@@ -1,24 +1,19 @@
-from fastapi import APIRouter, HTTPException, Response, status
-from typing import List
+from fastapi import APIRouter, HTTPException, status
 
-
-from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
-from src.modules.users.schemes import ViewUserScheme
-from src.api.dependencies import CurrentUserIdDep
-from src.modules.workshops.schemes import (
-    ReadWorkshopScheme,
+from src.api.dependencies import (
+    AdminDep,
+    CurrentUserDep,
+    WorkshopRepositoryDep,
+)
+from src.logging_ import logger
+from src.modules.users.schemas import ViewUserScheme
+from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
+from src.modules.workshops.schemas import (
     CreateWorkshopScheme,
+    ReadWorkshopScheme,
     UpdateWorkshopScheme,
 )
-
-from src.modules.workshops.dependencies import (
-    WorkshopRepositoryDep,
-    CheckInRepositoryDep,
-    AdminDep,
-)
-
-from src.modules.users.dependencies import UsersRepositoryDep
-from src.logging import logger
+from src.storages.sql.models import UserRole, Workshop
 
 router = APIRouter(prefix="/workshops")
 
@@ -35,42 +30,43 @@ router = APIRouter(prefix="/workshops")
     },
 )
 async def add_workshop(
-    *,
     workshop_repo: WorkshopRepositoryDep,
     workshop_create: CreateWorkshopScheme,
     _: AdminDep,
-):
-    workshop, status = await workshop_repo.create_workshop(workshop_create)
+) -> Workshop:
+    """
+    Add a new workshop
+    """
+    workshop, status = await workshop_repo.create(workshop_create)
     if status != WorkshopEnum.CREATED:
-        logger.error(f"Failed during adding workshop. Status: {status}")
         raise HTTPException(status_code=400, detail=status.value)
-    return ReadWorkshopScheme.model_validate(workshop)
+    if not workshop:
+        raise HTTPException(status_code=400, detail="Workshop creation failed")
+    return workshop
 
 
 @router.get(
     "/",
-    response_model=List[ReadWorkshopScheme],
     responses={
         status.HTTP_200_OK: {"description": "All workshops retrieved successfully"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
     },
 )
 async def get_all_workshops(
-    *,
     workshop_repo: WorkshopRepositoryDep,
     limit: int = 100,
-):
-    workshops = await workshop_repo.get_all_workshops(limit)
-    return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
+) -> list[Workshop]:
+    workshops = await workshop_repo.get_all(limit)
+    return list(workshops)
 
 
 @router.put(
     "/{workshop_id}",
     responses={
         status.HTTP_200_OK: {"description": "Workshop updated successfully"},
-        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
         status.HTTP_403_FORBIDDEN: {"description": "Not authorized (admin required)"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
     },
 )
 async def update_workshop(
@@ -78,20 +74,21 @@ async def update_workshop(
     workshop: UpdateWorkshopScheme,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
-):
-    updatedWorkshop, status = await workshop_repo.update_workshop(workshop_id, workshop)
+) -> Workshop:
+    updatedWorkshop, status = await workshop_repo.update(workshop_id, workshop)
     if not updatedWorkshop:
         raise HTTPException(status_code=404, detail=status.value)
-
-    return {"message": status}
+    if status != WorkshopEnum.UPDATED:
+        raise HTTPException(status_code=400, detail=status.value)
+    return updatedWorkshop
 
 
 @router.post(
     "/{workshop_id}/activate",
     responses={
         status.HTTP_200_OK: {"description": "Workshop activated"},
-        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
         status.HTTP_403_FORBIDDEN: {"description": "Not authorized (admin required)"},
     },
 )
@@ -99,12 +96,11 @@ async def activate_workshop(
     workshop_id: str,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
-):
-    workshop = await workshop_repo.change_active_status_workshop(workshop_id, True)
+) -> Workshop:
+    workshop = await workshop_repo.set_active(workshop_id, True)
     if not workshop:
-        logger.error(f"Failed during activating workshop.")
-        raise HTTPException(status_code=404, detail="Workshop not found")
-    return Response(status_code=status.HTTP_200_OK)
+        raise HTTPException(status_code=404, detail=WorkshopEnum.WORKSHOP_DOES_NOT_EXIST.value)
+    return workshop
 
 
 @router.post(
@@ -120,12 +116,12 @@ async def deactivate_workshop(
     workshop_id: str,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
-):
-    workshop = await workshop_repo.change_active_status_workshop(workshop_id, False)
+) -> Workshop:
+    workshop = await workshop_repo.set_active(workshop_id, False)
     if not workshop:
-        logger.error(f"Failed during deactivating workshop.")
+        logger.error("Failed during deactivating workshop.")
         raise HTTPException(status_code=404, detail="Workshop not found")
-    return Response(status_code=status.HTTP_200_OK)
+    return workshop
 
 
 @router.delete(
@@ -142,7 +138,7 @@ async def delete_workshop(
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
 ):
-    status = await workshop_repo.delete_workshop(workshop_id)
+    status = await workshop_repo.delete(workshop_id)
     if status != WorkshopEnum.DELETED:
         logger.error(f"Failed during deleting workshop. Status: {status}")
         raise HTTPException(status_code=404, detail=status.value)
@@ -154,71 +150,68 @@ async def delete_workshop(
     "/{workshop_id}/checkin",
     responses={
         status.HTTP_200_OK: {"description": "User successfully checked in"},
-        status.HTTP_404_NOT_FOUND: {
-            "description": "Workshop not found or other check-in error"
-        },
-        status.HTTP_400_BAD_REQUEST: {"description": "Check-in conditions not met"},
+        status.HTTP_400_BAD_REQUEST: {"description": "Some error occurred during checkin"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
     },
 )
 async def checkin_user(
     workshop_id: str,
-    user_id: CurrentUserIdDep,
-    checkin_repo: CheckInRepositoryDep,
-    user_repo: UsersRepositoryDep,
-):
-    user = await user_repo.read_by_id(user_id)  # type: ignore
-    if user is None:
-        raise HTTPException(status_code=500, detail="User not found")
-
-    check_in_status = await checkin_repo.create_checkIn(user.id, workshop_id)
-
-    if check_in_status != CheckInEnum.SUCCESS:
-        logger.error(f"Failed during checking in user. Status: {check_in_status}")
-        "TODO: Technically this code should be changed 500"
+    user: CurrentUserDep,
+    workshop_repo: WorkshopRepositoryDep,
+) -> None:
+    """
+    Check in a user to a workshop
+    """
+    check_in_status = await workshop_repo.check_in(user.innohassle_id, workshop_id)
+    if check_in_status == CheckInEnum.WORKSHOP_DOES_NOT_EXIST:
         raise HTTPException(status_code=404, detail=check_in_status.value)
-
-    return Response(status_code=status.HTTP_200_OK)
+    elif check_in_status != CheckInEnum.SUCCESS:
+        raise HTTPException(status_code=400, detail=check_in_status.value)
+    return None
 
 
 @router.post(
     "/{workshop_id}/checkout",
     responses={
         status.HTTP_200_OK: {"description": "User successfully checked out"},
-        status.HTTP_404_NOT_FOUND: {
-            "description": "Check-in not found or workshop missing"
-        },
+        status.HTTP_400_BAD_REQUEST: {"description": "Some error occurred during checkout"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
     },
 )
 async def checkout_user(
     workshop_id: str,
-    checkin_repo: CheckInRepositoryDep,
-    user_id: CurrentUserIdDep,
-    user_repo: UsersRepositoryDep,
+    workshop_repo: WorkshopRepositoryDep,
+    user: CurrentUserDep,
 ):
-    user = await user_repo.read_by_id(user_id)  # type: ignore
-    if user is None:
-        raise HTTPException(status_code=500, detail="User not found")
-
-    remove_check_in_status = await checkin_repo.remove_checkIn(user.id, workshop_id)
-    if remove_check_in_status != CheckInEnum.SUCCESS:
+    remove_check_in_status = await workshop_repo.check_out(user.innohassle_id, workshop_id)
+    if remove_check_in_status == CheckInEnum.WORKSHOP_DOES_NOT_EXIST:
         raise HTTPException(status_code=404, detail=remove_check_in_status.value)
+    elif remove_check_in_status != CheckInEnum.SUCCESS:
+        raise HTTPException(status_code=400, detail=remove_check_in_status.value)
+    return None
 
-    return Response(status_code=status.HTTP_200_OK)
 
-
-@router.get("/{workshop_id}/checkins", response_model=List[ViewUserScheme])
+@router.get(
+    "/{workshop_id}/checkins",
+    responses={
+        status.HTTP_200_OK: {"description": "All check-ins retrieved successfully"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
+    },
+)
 async def get_all_check_ins(
     workshop_id: str,
-    # user: AdminDep,
-    checkin_repo: CheckInRepositoryDep,
-):
-    users = await checkin_repo.get_checked_in_users_for_workshop(workshop_id)
-    if not users:
-        logger.error(f"Failed during checking in user. Status: {status}")
-        raise HTTPException(
-            status_code=404, detail="No check-ins found for this workshop"
-        )
-
-    return [ViewUserScheme.model_validate(user) for user in users]
+    workshop_repo: WorkshopRepositoryDep,
+    user: CurrentUserDep,
+) -> list[ViewUserScheme]:
+    workshop = await workshop_repo.get(workshop_id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+    users = await workshop_repo.get_checked_in_users(workshop_id)
+    validated = [ViewUserScheme.model_validate(user) for user in users]
+    if user.role != UserRole.admin:
+        for u in validated:
+            u.telegram_username = None  # set to None for non-admins to avoid leaking info
+    return validated

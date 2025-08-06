@@ -1,66 +1,38 @@
+# This is a Docker Compose configuration for local use.
+# In production use docker-compose.prod.yaml
+
+# Run all services:
+# docker compose up --build --detach
+
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: workshops_postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-workshops_db}
-      POSTGRES_USER: ${POSTGRES_USER:-workshops_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workshops_password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  api:
+    build: . # See Dockerfile for more details
+    depends_on:
+      db:
+        # Wait for the database to be ready before starting the application
+        condition: service_healthy
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "8005:8000"
+    volumes:
+      - "./predefined:/api/predefined:rw" # Read-write predefined data
+      - "./settings.yaml:/api/settings.yaml:ro" # Read-only settings file
+  db:
+    # See more: https://hub.docker.com/_/postgres
+    image: "postgres:17.1"
+    restart: always
+    # The commits were slow on our servers, so we turned off the synchronous_commit
+    command: postgres -c synchronous_commit=off
+    volumes:
+      - "postgres:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workshops_user} -d ${POSTGRES_DB:-workshops_db}"]
-      interval: 10s
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - workshops_network
-    restart: unless-stopped
-
-  backend:
-    image: python:3.13
-    container_name: workshops_backend
     environment:
-      # Database configuration
-      DATABASE_URI: ${DATABASE_URI}
-      
-      # Application configuration
-      SECRET_KEY: ${SECRET_KEY}
-      TOKEN_EXPIRE_TIME: ${TOKEN_EXPIRE_TIME:-60}
-      API_JWT_TOKEN: ${API_JWT_TOKEN}
-      IS_PROD: ${IS_PROD:-Prod}
-      
-      # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    ports:
-      - "${BACKEND_PORT:-9000}:9000"
-    volumes:
-      - ./src:/app/src
-      - ./pyproject.toml:/app/pyproject.toml
-      - ./uv.lock:/app/uv.lock
-      - ./alembic.ini:/app/alembic.ini
-      - ./logging.yaml:/app/logging.yaml
-      - ./logs:/app/logs
-    working_dir: /app
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - workshops_network
-    restart: unless-stopped
-    command: >
-      sh -c "
-        pip install --no-cache-dir uv &&
-        uv pip install -e . &&
-        uv run src/api/__main__.py
-      "
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
 
 volumes:
-  postgres_data:
-    driver: local
-
-networks:
-  workshops_network:
-    driver: bridge 
+  postgres:

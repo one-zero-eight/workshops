@@ -1,16 +1,24 @@
-import re
-
-from fastapi.routing import APIRoute
-
 # API version
 VERSION = "0.1.0"
 
 # Info for OpenAPI specification
-TITLE = "Workshops API"
-SUMMARY = "Workshops API | InNoHassle ecosystem for InNoHassle ecosystem."
+TITLE = "InNoHassle Workshops API"
+SUMMARY = "Check in to workshops and manage them at Innopolis University Bootcamp."
+DESCRIPTION = """
+### About this project
 
-# TODO: Add description
-DESCRIPTION = "None"
+This is the API for Workshops project in InNoHassle ecosystem developed by [one-zero-eight](https://t.me/one_zero_eight) community.
+
+Using this API you can check in to workshops and manage them at Innopolis University Bootcamp.
+
+Backend is developed using FastAPI framework on Python.
+
+Note: API is unstable. Endpoints and models may change in the future.
+
+Useful links:
+- [Workshops API source code](https://github.com/one-zero-eight/workshops)
+- [InNoHassle Website](https://innohassle.ru/workshops)
+"""
 
 CONTACT_INFO = {
     "name": "one-zero-eight (Telegram)",
@@ -23,16 +31,3 @@ LICENSE_INFO = {
 }
 
 TAGS_INFO = []
-
-
-def generate_unique_operation_id(route: APIRoute) -> str:
-    # Better names for operationId in OpenAPI schema.
-    # It is needed because clients generate code based on these names.
-    # Requires pair (tag name + function name) to be unique.
-    # See fastapi.utils:generate_unique_id (default implementation).
-    if route.tags:
-        operation_id = f"{route.tags[0]}_{route.name}".lower()
-    else:
-        operation_id = route.name.lower()
-    operation_id = re.sub(r"\W+", "_", operation_id)
-    return operation_id

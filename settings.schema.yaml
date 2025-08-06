@@ -1,0 +1,64 @@
+$schema: https://json-schema.org/draft-07/schema
+$defs:
+  Accounts:
+    additionalProperties: false
+    description: InNoHassle Accounts integration settings
+    properties:
+      api_url:
+        default: https://api.innohassle.ru/accounts/v0
+        description: URL of the Accounts API
+        title: Api Url
+        type: string
+      api_jwt_token:
+        description: JWT token for accessing the Accounts API as a service
+        format: password
+        title: Api Jwt Token
+        type: string
+        writeOnly: true
+    required:
+    - api_jwt_token
+    title: Accounts
+    type: object
+additionalProperties: false
+description: Settings for the application.
+properties:
+  $schema:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    title: $Schema
+  app_root_path:
+    default: ''
+    description: Prefix for the API path (e.g. "/api/v0")
+    title: App Root Path
+    type: string
+  db_url:
+    description: PostgreSQL database settings
+    examples:
+    - postgresql+asyncpg://postgres:postgres@localhost:5432/postgres
+    - postgresql+asyncpg://postgres:postgres@db:5432/postgres
+    format: password
+    title: Db Url
+    type: string
+    writeOnly: true
+  cors_allow_origin_regex:
+    default: .*
+    description: 'Allowed origins for CORS: from which domains requests to the API
+      are allowed. Specify as a regex: `https://.*.innohassle.ru`'
+    title: Cors Allow Origin Regex
+    type: string
+  accounts:
+    $ref: '#/$defs/Accounts'
+  superadmin_emails:
+    default: []
+    description: List of superadmin emails
+    items:
+      type: string
+    title: Superadmin Emails
+    type: array
+required:
+- db_url
+- accounts
+title: Settings
+type: object

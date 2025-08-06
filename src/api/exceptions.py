@@ -4,7 +4,8 @@ from typing import Any, ClassVar
 
 from fastapi import HTTPException
 from starlette import status
-from src.logging import logger
+
+from src.logging_ import logger
 
 
 class CustomHTTPException(HTTPException):

@@ -1,14 +1,9 @@
 import asyncio
 from logging.config import fileConfig
 
-from dotenv import dotenv_values
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from src.storages.sql.models.users import User
-from src.storages.sql.models.workshops import Workshop, WorkshopCheckin
-
-# NOTE: Make sure that every new model imported here
 
 from alembic import context
 
@@ -21,15 +16,24 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-env_values = dotenv_values(".env")
-config.set_main_option("sqlalchemy.url", env_values["DATABASE_URI"])  # type: ignore
+# Read settings YAML file
+import os  # noqa: E402
+from pathlib import Path  # noqa: E402
 
+from yaml import safe_load  # noqa: E402
+
+app_settings_path = os.getenv("SETTINGS_PATH", "settings.yaml")
+app_settings = safe_load(Path(app_settings_path).read_text())
+# get database uri from settings.yaml
+config.set_main_option("sqlalchemy.url", app_settings["db_url"])
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel  # noqa: E402
+
+from src.storages.sql.models import *  # noqa: E402
 
 target_metadata = SQLModel.metadata
 
@@ -64,7 +68,9 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, target_metadata=target_metadata, process_revision_directives=process_revision_directives
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -92,6 +98,20 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
     asyncio.run(run_async_migrations())
+
+
+# https://stackoverflow.com/a/71212675/19566814
+# almost identical to Flask-Migrate (Thanks miguel!)
+# this callback is used to prevent an auto-migration from being generated
+# when there are no changes to the schema
+
+
+def process_revision_directives(context, revision, directives):
+    if config.cmd_opts.autogenerate:
+        script = directives[0]
+        if script.upgrade_ops.is_empty():
+            directives[:] = []
+            print("No changes in schema detected.")
 
 
 if context.is_offline_mode():

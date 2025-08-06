@@ -1,147 +1,158 @@
-from datetime import datetime, timedelta
-from fastapi.testclient import TestClient
-import pytest_asyncio
-from src.api import app
-from src.config import settings
+from asyncio import current_task
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime, timedelta
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 from sqlmodel import SQLModel
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from src.modules.workshops.enums import WorkshopEnum, CheckInEnum
-from src.modules.workshops.repository import WorkshopRepository, CheckInRepository
+
+from src.api.app import app
+from src.api.dependencies import current_user_dep
+from src.config import settings
 from src.modules.users.repository import UsersRepository
-from src.modules.workshops.schemes import CreateWorkshopScheme, UpdateWorkshopScheme
-from src.modules.users.schemes import CreateUserScheme
-from src.storages.sql.models.users import User
+from src.modules.users.schemas import CreateUserScheme
+from src.modules.workshops.repository import WorkshopRepository
+from src.modules.workshops.schemas import CreateWorkshopScheme, UpdateWorkshopScheme
+from src.storages.sql.models import User, UserRole
 
-from src.storages.sql.models.users import UserRole
+# --- Set the database URL for testing (isolate it if needed) ---
+TEST_DATABASE_URL = settings.db_url.get_secret_value()
 
-# TODO: Need to rewrite scope of fixtures as now everything is created each time it's kinda bad
+# --- Async SQLAlchemy engine using NullPool for isolation ---
+engine = create_async_engine(
+    TEST_DATABASE_URL,
+    echo=False,
+    future=True,
+    poolclass=NullPool,
+)
+
+Session = async_scoped_session(
+    async_sessionmaker(expire_on_commit=False),
+    scopefunc=current_task,
+)
 
 
-@pytest_asyncio.fixture(loop_scope="function")
-async def session_db_connection():
-    engine = create_async_engine(
-        # url="sqlite+aiosqlite:///:memory:"
-        url=settings.database_uri,
-        # echo=True
-    )
+# --- Create all tables at start, drop all at the end ---
+@pytest.fixture(scope="session", autouse=True)
+async def prepare_database():
+    """
+    Create and drop all tables once per session.
+    Ensures a clean test DB environment.
+    """
 
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with engine.begin() as conn:
+    async with engine.begin() as conn:        
         await conn.run_sync(SQLModel.metadata.create_all)
-    async with async_session() as session:
-        yield session
-        await session.rollback()
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
 
 
-@pytest_asyncio.fixture(loop_scope="function")
-async def create_user_data():
-    user = CreateUserScheme(
-        innohassle_id="some_innohassle_id",
-        email="user@example.com",
-        t_alias="tomatotomoder",
+# --- Session fixture per test function with rollback ---
+@pytest.fixture(scope="function")
+async def async_session():
+    async with engine.begin() as conn:
+        async with conn.begin_nested() as transaction:
+            async with Session(bind=conn) as session:
+                yield session
+            await transaction.rollback()
+
+
+# --- Override FastAPI dependencies to use test session ---
+@pytest.fixture()
+async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """
+    Provides an HTTP client that makes requests directly to the FastAPI app,
+    using the test session via dependency override.
+    """
+    from src.storages.sql.dependencies import get_session
+
+    # Dependency override for `get_session`
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        yield async_session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    # Use httpx.AsyncClient with ASGITransport
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+
+    app.dependency_overrides.pop(get_session, None)
+
+
+# --- Fixtures for authentication ---
+@pytest.fixture
+async def authenticated_client(async_client: AsyncClient, user: User):
+    try:
+        app.dependency_overrides[current_user_dep] = lambda: user
+        yield async_client
+    finally:
+        app.dependency_overrides.pop(current_user_dep, None)
+
+
+@pytest.fixture
+async def admin_authenticated_client(async_client: AsyncClient, user: User):
+    try:
+        app.dependency_overrides[current_user_dep] = lambda: user.model_copy(update={"role": UserRole.admin})
+        yield async_client
+    finally:
+        app.dependency_overrides.pop(current_user_dep, None)
+
+
+@pytest.fixture
+async def workshop_repository(async_session: AsyncSession):
+    return WorkshopRepository(async_session)
+
+
+@pytest.fixture
+async def user_repository(async_session: AsyncSession):
+    return UsersRepository(async_session)
+
+
+# --- Fixtures --- #
+
+@pytest.fixture()
+async def user(user_repository: UsersRepository):
+    created_user = await user_repository.create(
+        CreateUserScheme(
+            innohassle_id="test_user_id",
+            email="test@test.com",
+            telegram_username="test_user",
+        )
     )
-    return user
+    return created_user
 
 
-@pytest_asyncio.fixture(loop_scope="function")
-async def create_workshop_data():
-    create_data = CreateWorkshopScheme(
+@pytest.fixture
+async def workshop_data_to_create():
+    return CreateWorkshopScheme(
         name="name",
         description="description",
         place="place",
-        dtstart=datetime.now() + timedelta(minutes=1),
-        dtend=datetime.now() + timedelta(days=1),
-        is_active=False,
+        dtstart=datetime.now(UTC) + timedelta(minutes=1),
+        dtend=datetime.now(UTC) + timedelta(days=1),
+        is_active=True,
     )
-    return create_data
 
 
-@pytest_asyncio.fixture(loop_scope="function")
-async def update_workshop_data():
-    update_data = UpdateWorkshopScheme(
+@pytest.fixture
+async def workshop_data_to_update():
+    return UpdateWorkshopScheme(
         name="name_updated",
         description="description_updated",
         place="place_updated",
-        dtstart=datetime.now() + timedelta(minutes=1),
-        dtend=datetime.now() + timedelta(days=1),
+        dtstart=datetime.now(UTC) + timedelta(minutes=1),
+        dtend=datetime.now(UTC) + timedelta(days=1),
     )
-    return update_data
 
 
-@pytest_asyncio.fixture(loop_scope="function")
-async def getWorkshopRepository(session_db_connection):
-    return WorkshopRepository(session_db_connection)  # type: ignore
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def getWorkshopCheckinRepository(session_db_connection, getWorkshopRepository):
-    return CheckInRepository(session_db_connection, getWorkshopRepository)
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def getUserRepository(session_db_connection):
-    return UsersRepository(session_db_connection)
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def add_user_and_clean(create_user_data, getUserRepository):
-    user = await getUserRepository.create(create_user_data)
-    assert user is not None
-    yield user
-
-    await getUserRepository.delete(user)
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def add_workshop_and_clean(create_workshop_data, getWorkshopRepository):
-    workshop, status = await getWorkshopRepository.create_workshop(create_workshop_data)
-    assert status == WorkshopEnum.CREATED
-    yield workshop
-
-    await getWorkshopRepository.delete_workshop(workshop.id)
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def add_user_and_workshop_clean(add_workshop_and_clean, add_user_and_clean):
-    workshop = add_workshop_and_clean
-    user = add_user_and_clean
-    return workshop, user
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def add_checkin_and_clean(
-    getWorkshopCheckinRepository,
-    add_workshop_and_clean,
-    getWorkshopRepository,
-    add_user_and_clean,
+@pytest.fixture
+async def already_created_workshop(
+    workshop_repository: WorkshopRepository,
+    workshop_data_to_create: CreateWorkshopScheme,
 ):
-    workshop = add_workshop_and_clean
-    workshop.is_active = True
-
-    user = add_user_and_clean
-
-    status = await getWorkshopCheckinRepository.create_checkIn(user.id, workshop.id)
-
-    assert status == CheckInEnum.SUCCESS
-
-    yield user, workshop
-
-    await getWorkshopCheckinRepository.remove_checkIn(user.id, workshop.id)
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def admin_dep(create_user_data):
-    return create_user_data
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def current_user_id_dep():
-    return "some_user_id"
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def get_client():
-    client = TestClient(app.app)
-    return client
+    workshop, _ = await workshop_repository.create(workshop_data_to_create)
+    assert workshop is not None
+    return workshop

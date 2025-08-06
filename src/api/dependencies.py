@@ -1,33 +1,84 @@
-__all__ = ["CurrentUserIdDep", "get_current_user_id"]
+__all__ = ["CurrentUserDep", "current_user_dep"]
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.api.exceptions import IncorrectCredentialsException
-from src.modules.tokens.dependencies import TokenRepositoryDep
+from src.logging_ import logger
+from src.modules.inh_accounts_sdk import inh_accounts
+from src.modules.users.repository import UsersRepository
+from src.modules.users.schemas import CreateUserScheme
+from src.modules.workshops.repository import WorkshopRepository
+from src.storages.sql.dependencies import DbSessionDep
+from src.storages.sql.models import User, UserRole
 
 bearer_scheme = HTTPBearer(
     scheme_name="Bearer",
-    description="Token from [InNoHassle Accounts](https://api.innohassle.ru/accounts/v0/tokens/generate-my-token)",
+    description="Token from [InNoHassle Accounts](https://innohassle.ru/account/token)",
     bearerFormat="JWT",
-    auto_error=True,  # We'll handle error manually
+    auto_error=False,  # We'll handle error manually
 )
 
 
-async def get_current_user_id(
-    token_repository: TokenRepositoryDep,
+def get_users_repository(db_session: DbSessionDep) -> UsersRepository:
+    return UsersRepository(db_session)
+
+
+UsersRepositoryDep = Annotated[UsersRepository, Depends(get_users_repository)]
+
+
+async def current_user_dep(
+    user_repository: UsersRepositoryDep,
     bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-) -> str:
+) -> User:
     # Prefer header to cookie
     token = bearer and bearer.credentials
     if not token:
         raise IncorrectCredentialsException(no_credentials=True)
-    token_data = await token_repository.verify_user_token(
-        token, IncorrectCredentialsException()
+    token_data = inh_accounts.decode_token(token)
+    if token_data is None:
+        raise IncorrectCredentialsException(no_credentials=False)
+    inh_user = await inh_accounts.get_user(innohassle_id=token_data.innohassle_id)
+    assert inh_user is not None, "User not found, but token is valid. It shouldn't happen."
+
+    if inh_user.innopolis_sso is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Connected email is required",
+        )
+    if inh_user.telegram is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Connected telegram is required",
+        )
+
+    user = await user_repository.fetch_or_create(
+        CreateUserScheme(
+            innohassle_id=token_data.innohassle_id,
+            email=inh_user.innopolis_sso.email,
+            telegram_username=inh_user.telegram.username,
+        )
     )
-    return token_data.user_id
+    return user
 
 
-CurrentUserIdDep = Annotated[str, Depends(get_current_user_id)]
+CurrentUserDep = Annotated[User, Depends(current_user_dep)]
+
+
+async def admin_dep(user: CurrentUserDep):
+    if user.role != UserRole.admin:
+        logger.warning("User does not have admin role.")
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
+AdminDep = Annotated[User, Depends(admin_dep)]
+
+
+async def get_workshop_repository(db_session: DbSessionDep) -> WorkshopRepository:
+    return WorkshopRepository(db_session)
+
+
+WorkshopRepositoryDep = Annotated[WorkshopRepository, Depends(get_workshop_repository)]

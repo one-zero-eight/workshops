@@ -1,79 +1,57 @@
-from fastapi import APIRouter, HTTPException, Response, status
-from typing import List
-from dotenv import load_dotenv
+from fastapi import APIRouter, HTTPException, status
 
-from src.storages.sql.models.users import User
-from src.modules.workshops.dependencies import CheckInRepositoryDep
-from src.modules.workshops.schemes import ReadWorkshopScheme
-from src.modules.users.dependencies import UsersRepositoryDep
-
-from src.api.dependencies import CurrentUserIdDep
-from src.logging import logger
+from src.api.dependencies import CurrentUserDep, UsersRepositoryDep, WorkshopRepositoryDep
 from src.config import settings
-
-
-load_dotenv()
+from src.modules.workshops.schemas import ReadWorkshopScheme
+from src.storages.sql.models import User, UserRole
 
 router = APIRouter(prefix="/users")
 
 
 @router.get("/me", responses={200: {"description": "Current user info"}})
-async def get_me(
-    user_id: CurrentUserIdDep, user_repository: UsersRepositoryDep
-) -> User | None:
+async def get_me(user: CurrentUserDep) -> User:
     """
     Get current user info if authenticated
     """
-    user = await user_repository.read_by_id(user_id)  # type: ignore
     return user
 
 
 @router.get(
     "/my_checkins",
-    response_model=List[ReadWorkshopScheme],
     responses={
         status.HTTP_200_OK: {"description": "User's check-ins retrieved successfully"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
     },
 )
 async def get_my_checkins(
-    checkin_repo: CheckInRepositoryDep,
-    user_id: CurrentUserIdDep,
-    user_repo: UsersRepositoryDep,
-):
-    user = await user_repo.read_by_id(user_id)  # type: ignore
-    if user is None:
-        raise HTTPException(status_code=500, detail="User not found")
-
-    workshops = await checkin_repo.get_checked_in_workshops_for_user(user.id)
-    if not workshops:
-        raise HTTPException(status_code=404, detail="No check-ins found for this user")
+    workshop_repo: WorkshopRepositoryDep,
+    user: CurrentUserDep,
+) -> list[ReadWorkshopScheme]:
+    workshops = await workshop_repo.get_checked_in_workshops(user.innohassle_id)
     return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
 
 
 @router.post(
     "/change_role",
     responses={
-        status.HTTP_200_OK: {"description": "Changed role succesfully"},
-        status.HTTP_403_FORBIDDEN: {
-            "description": "Changing role is not allowed in production"
-        },
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "User not found"},
+        status.HTTP_200_OK: {"description": "Changed role succesfully, returns updated user"},
+        status.HTTP_403_FORBIDDEN: {"description": "Only superadmin can change role"},
+        status.HTTP_404_NOT_FOUND: {"description": "User to change not found"},
     },
 )
 async def change_role(
-    role: str, users_repo: UsersRepositoryDep, user_id: CurrentUserIdDep
-):
-    if settings.is_prod == "True":
-        raise HTTPException(
-            status_code=403, detail="Changing role is not allowed in production"
-        )
-
-    user = await users_repo.read_by_id(user_id)  # type: ignore
-    if user is None:
-        raise HTTPException(status_code=500, detail="User not found")
-
-    userChanged = await users_repo.change_role_of_user(user.id, role)
-    if not userChanged:
-        raise HTTPException(status_code=500, detail="Role not changed")
-    return Response(status_code=status.HTTP_200_OK)
+    role: UserRole,
+    users_repo: UsersRepositoryDep,
+    current_user: CurrentUserDep,
+    user_to_change_email: str,
+) -> User:
+    """
+    Change role of user by email
+    """
+    if current_user.email not in settings.superadmin_emails:
+        raise HTTPException(status_code=403, detail="Only superadmin can change role")
+    user_to_change = await users_repo.read_by_email(user_to_change_email)
+    if not user_to_change:
+        raise HTTPException(status_code=404, detail="User to change not found")
+    await users_repo.change_role_of_user(user_to_change, role)
+    return user_to_change
