@@ -42,7 +42,7 @@ async def prepare_database():
     Ensures a clean test DB environment.
     """
 
-    async with engine.begin() as conn:        
+    async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     yield
     async with engine.begin() as conn:
@@ -61,7 +61,7 @@ async def async_session():
 
 # --- Override FastAPI dependencies to use test session ---
 @pytest.fixture()
-async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
     """
     Provides an HTTP client that makes requests directly to the FastAPI app,
     using the test session via dependency override.
@@ -69,7 +69,7 @@ async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClien
     from src.storages.sql.dependencies import get_session
 
     # Dependency override for `get_session`
-    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+    async def override_get_session() -> AsyncGenerator[AsyncSession]:
         yield async_session
 
     app.dependency_overrides[get_session] = override_get_session
@@ -112,6 +112,7 @@ async def user_repository(async_session: AsyncSession):
 
 
 # --- Fixtures --- #
+
 
 @pytest.fixture()
 async def user(user_repository: UsersRepository):

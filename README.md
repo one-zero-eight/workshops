@@ -38,7 +38,7 @@ This is the API for workshops service in InNoHassle ecosystem. It provides backe
    ```bash
    uv sync
    ```
-3. Start development server (read logs in the terminal): 
+3. Start development server (read logs in the terminal):
    ```bash
    uv run -m src.api --reload
    ```

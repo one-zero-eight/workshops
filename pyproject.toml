@@ -33,6 +33,7 @@ lint.ignore = [
     "PLR",
 ]
 lint.extend-select = ["I", "UP", "PL"]
+lint.extend-ignore = ["PLC0415"]
 target-version = "py313"
 
 [tool.pytest.ini_options]

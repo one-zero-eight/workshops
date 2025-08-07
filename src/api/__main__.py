@@ -16,9 +16,9 @@ extended_args = [
     "--use-colors",
     "--proxy-headers",
     "--forwarded-allow-ips=*",
-    "--port", "8005",
+    "--port=8005",
     *args,
 ]
 
-print(f"🚀 Starting Uvicorn server: 'uvicorn {" ".join(extended_args)}'")
+print(f"🚀 Starting Uvicorn server: 'uvicorn {' '.join(extended_args)}'")
 uvicorn.main.main(extended_args)

@@ -1,6 +1,7 @@
 """
 Based on https://github.com/dantetemplar/fastapi-how-to-log
 """
+
 __all__ = ["logger"]
 
 import asyncio
@@ -19,11 +20,12 @@ class RelativePathFilter(logging.Filter):
         record.relativePath = os.path.relpath(record.pathname)
         return True
 
+
 class CleanErrorFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         if record.exc_info:
             exc_type, exc, tb = record.exc_info
-            while tb: # Reduce stack trace length from top to bottom
+            while tb:  # Reduce stack trace length from top to bottom
                 co_filename = tb.tb_frame.f_code.co_filename if (tb and tb.tb_frame) else None
                 for skip in (
                     "uvicorn/protocols/http/httptools_impl.py",
@@ -46,9 +48,8 @@ class CleanErrorFilter(logging.Filter):
             # Reduce stack trace length from bottom to top
             if tb and tb.tb_next and tb.tb_next.tb_frame.f_code.co_filename.endswith("httpx/_api.py"):
                 tb.tb_next = None
-                exc.__cause__ = None # type: ignore
-                exc.__context__ = None # type: ignore
-
+                exc.__cause__ = None  # type: ignore
+                exc.__context__ = None  # type: ignore
 
             record.exc_info = (exc_type, exc, tb)  # type: ignore
         return True
@@ -60,9 +61,7 @@ dictConfig = {
     "formatters": {
         "default": {
             "()": "colorlog.ColoredFormatter",
-            "format": "[%(black)s%(asctime)s%(reset)s] "
-            "[%(log_color)s%(levelname)s%(reset)s] "
-            "[%(name)s] %(message)s",
+            "format": "[%(black)s%(asctime)s%(reset)s] [%(log_color)s%(levelname)s%(reset)s] [%(name)s] %(message)s",
         },
         "src": {
             "()": "colorlog.ColoredFormatter",

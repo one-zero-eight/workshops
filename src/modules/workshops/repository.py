@@ -35,9 +35,7 @@ class WorkshopRepository:
 
         await self.session.commit()
 
-    async def create(
-        self, workshop: CreateWorkshopScheme
-    ) -> tuple[Workshop | None, WorkshopEnum]:
+    async def create(self, workshop: CreateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
         db_workshop = Workshop.model_validate(workshop)
 
         self.session.add(db_workshop)
@@ -71,16 +69,14 @@ class WorkshopRepository:
 
         # Check that current number of checked in users is not greater than new capacity
         if (
-            workshop_dump["capacity"] != None
+            workshop_dump["capacity"] is not None
             and workshop_dump["capacity"] < workshop.capacity - workshop.remain_places
         ):
             return None, WorkshopEnum.INVALID_CAPACITY_FOR_UPDATE
 
         # Recalculating the "remain_places" value
-        if workshop_dump["capacity"] != None:
-            workshop.remain_places = workshop.remain_places - (
-                workshop.capacity - workshop_dump["capacity"]
-            )
+        if workshop_dump["capacity"] is not None:
+            workshop.remain_places = workshop.remain_places - (workshop.capacity - workshop_dump["capacity"])
 
         for key, value in workshop_dump.items():
             if value is not None:
@@ -98,9 +94,7 @@ class WorkshopRepository:
 
         return workshop, WorkshopEnum.UPDATED
 
-    async def set_active(
-        self, workshop_id: str, active: bool
-    ) -> Workshop | None:
+    async def set_active(self, workshop_id: str, active: bool) -> Workshop | None:
         workshop = await self.get(workshop_id)
         if not workshop:
             return None
@@ -124,7 +118,6 @@ class WorkshopRepository:
         await self.session.commit()
 
         return WorkshopEnum.DELETED
-
 
     async def is_checked_in(self, user_id: str, workshop_id: str) -> bool:
         existing = await self.session.get(WorkshopCheckin, (user_id, workshop_id))
@@ -185,24 +178,12 @@ class WorkshopRepository:
 
         return CheckInEnum.SUCCESS
 
-    async def get_checked_in_workshops(
-        self, user_id: str
-    ) -> Sequence[Workshop]:
-        statement = (
-            select(Workshop)
-            .join(WorkshopCheckin)
-            .where(WorkshopCheckin.user_id == user_id)
-        )
+    async def get_checked_in_workshops(self, user_id: str) -> Sequence[Workshop]:
+        statement = select(Workshop).join(WorkshopCheckin).where(WorkshopCheckin.user_id == user_id)
         results = await self.session.execute(statement)
         return results.scalars().all()
 
-    async def get_checked_in_users(
-        self, workshop_id: str
-    ) -> Sequence[User]:
-        statement = (
-            select(User)
-            .join(WorkshopCheckin)
-            .where(WorkshopCheckin.workshop_id == workshop_id)
-        )
+    async def get_checked_in_users(self, workshop_id: str) -> Sequence[User]:
+        statement = select(User).join(WorkshopCheckin).where(WorkshopCheckin.workshop_id == workshop_id)
         result = await self.session.execute(statement)
         return result.scalars().all()

@@ -52,7 +52,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """
     as_validation_error = ValidationError.from_exception_data(
         str(request.url.path),
-        line_errors=exc.errors(), # type: ignore
+        line_errors=exc.errors(),  # type: ignore
     )
     error_str = str(as_validation_error)
     logger.warning(error_str, exc_info=False)

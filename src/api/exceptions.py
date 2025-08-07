@@ -32,6 +32,4 @@ class IncorrectCredentialsException(CustomHTTPException):
                 detail=self.responses[401]["description"],
             )
 
-    responses = {
-        401: {"description": "Unable to verify credentials OR Credentials not provided"}
-    }
+    responses = {401: {"description": "Unable to verify credentials OR Credentials not provided"}}

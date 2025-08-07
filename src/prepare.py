@@ -197,6 +197,7 @@ def check_database_access():
 
     asyncio.run(test_connection())
 
+
 def prepare():
     ensure_settings_file()
     ensure_pre_commit_hooks()

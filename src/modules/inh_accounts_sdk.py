@@ -41,6 +41,7 @@ class UserTokenData(BaseModel):
     telegram_id: int | None = None
     "User's Telegram ID connected to InNoHassle Accounts"
 
+
 class InNoHassleAccounts:
     api_url: str
     api_jwt_token: str

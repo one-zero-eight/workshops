@@ -51,10 +51,10 @@ async def test_change_active_status_workshop(
 ):
     workshop_changed = await workshop_repository.set_active(already_created_workshop.id, True)
     assert workshop_changed is not None
-    assert workshop_changed.is_active == True
+    assert workshop_changed.is_active
     workshop_changed = await workshop_repository.set_active(already_created_workshop.id, False)
     assert workshop_changed is not None
-    assert workshop_changed.is_active == False
+    assert not workshop_changed.is_active
 
 
 async def test_delete_workshop(
