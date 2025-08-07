@@ -15,7 +15,7 @@ from src.modules.workshops.schemas import (
 )
 from src.storages.sql.models import UserRole, Workshop
 
-router = APIRouter(prefix="/workshops")
+router = APIRouter(prefix="/workshops", tags=["Workshops"])
 
 
 @router.post(

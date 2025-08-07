@@ -5,7 +5,7 @@ from src.config import settings
 from src.modules.workshops.schemas import ReadWorkshopScheme
 from src.storages.sql.models import User, UserRole
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/me", responses={200: {"description": "Current user info"}})
