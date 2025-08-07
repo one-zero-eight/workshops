@@ -10,6 +10,7 @@ dependencies = [
     "colorlog>=6.9.0",
     "fastapi-swagger>=0.3.27",
     "fastapi[standard]>=0.112",
+    "gunicorn>=23.0.0",
     "sqlalchemy>=2.0.41",
     "sqlmodel>=0.0.24",
 ]
