@@ -14,8 +14,7 @@ from src.config import settings
 from src.modules.users.repository import UsersRepository
 from src.modules.users.schemas import CreateUserScheme
 from src.modules.workshops.repository import WorkshopRepository
-from src.modules.workshops.schemas import CreateWorkshopScheme, UpdateWorkshopScheme
-from src.storages.sql.models import User, UserRole
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, UserRole
 
 # --- Set the database URL for testing (isolate it if needed) ---
 TEST_DATABASE_URL = settings.db_url.get_secret_value()
@@ -128,19 +127,19 @@ async def user(user_repository: UsersRepository):
 
 @pytest.fixture
 async def workshop_data_to_create():
-    return CreateWorkshopScheme(
+    return CreateWorkshop(
         name="name",
         description="description",
         place="place",
         dtstart=datetime.now(UTC) + timedelta(minutes=1),
         dtend=datetime.now(UTC) + timedelta(days=1),
-        is_active=True,
+        capacity=10,
     )
 
 
 @pytest.fixture
 async def workshop_data_to_update():
-    return UpdateWorkshopScheme(
+    return UpdateWorkshop(
         name="name_updated",
         description="description_updated",
         place="place_updated",
@@ -152,7 +151,7 @@ async def workshop_data_to_update():
 @pytest.fixture
 async def already_created_workshop(
     workshop_repository: WorkshopRepository,
-    workshop_data_to_create: CreateWorkshopScheme,
+    workshop_data_to_create: CreateWorkshop,
 ):
     workshop, _ = await workshop_repository.create(workshop_data_to_create)
     assert workshop is not None

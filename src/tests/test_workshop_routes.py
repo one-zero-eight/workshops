@@ -2,13 +2,10 @@ from fastapi import status
 from httpx import AsyncClient
 
 from src.modules.workshops.enums import WorkshopEnum
-from src.modules.workshops.schemas import CreateWorkshopScheme, UpdateWorkshopScheme
-from src.storages.sql.models import User, Workshop
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, Workshop
 
 
-async def test_add_workshop_success(
-    admin_authenticated_client: AsyncClient, workshop_data_to_create: CreateWorkshopScheme
-):
+async def test_add_workshop_success(admin_authenticated_client: AsyncClient, workshop_data_to_create: CreateWorkshop):
     data = workshop_data_to_create.model_dump()
     # Convert datetime objects to ISO format strings
     data["dtstart"] = data["dtstart"].isoformat()
@@ -20,9 +17,7 @@ async def test_add_workshop_success(
     assert resp_json["description"] == data["description"]
 
 
-async def test_add_workshop_fail(
-    admin_authenticated_client: AsyncClient, workshop_data_to_create: CreateWorkshopScheme
-):
+async def test_add_workshop_fail(admin_authenticated_client: AsyncClient, workshop_data_to_create: CreateWorkshop):
     # Simulate failure by sending incomplete data
     data = workshop_data_to_create.model_dump()
     # Convert datetime objects to ISO format strings
@@ -44,7 +39,7 @@ async def test_get_all_workshops(authenticated_client: AsyncClient, already_crea
 async def test_update_workshop_success(
     admin_authenticated_client: AsyncClient,
     already_created_workshop: Workshop,
-    workshop_data_to_update: UpdateWorkshopScheme,
+    workshop_data_to_update: UpdateWorkshop,
 ):
     data = workshop_data_to_update.model_dump()
     # Convert datetime objects to ISO format strings
@@ -58,7 +53,7 @@ async def test_update_workshop_success(
 
 
 async def test_update_workshop_not_found(
-    admin_authenticated_client: AsyncClient, workshop_data_to_update: UpdateWorkshopScheme
+    admin_authenticated_client: AsyncClient, workshop_data_to_update: UpdateWorkshop
 ):
     data = workshop_data_to_update.model_dump()
     # Convert datetime objects to ISO format strings

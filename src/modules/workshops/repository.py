@@ -6,8 +6,7 @@ from sqlmodel import select, update
 
 from src.logging_ import logger
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
-from src.modules.workshops.schemas import CreateWorkshopScheme, UpdateWorkshopScheme
-from src.storages.sql.models import User, Workshop, WorkshopCheckin
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, Workshop, WorkshopCheckin
 
 
 class WorkshopRepository:
@@ -32,11 +31,10 @@ class WorkshopRepository:
             .values(is_registrable=False)
         )
         await self.session.execute(stmt_disable)
-
         await self.session.commit()
 
-    async def create(self, workshop: CreateWorkshopScheme) -> tuple[Workshop | None, WorkshopEnum]:
-        db_workshop = Workshop.model_validate(workshop)
+    async def create(self, workshop: CreateWorkshop) -> tuple[Workshop | None, WorkshopEnum]:
+        db_workshop = Workshop.model_validate(workshop.model_dump(exclude_unset=True))
 
         self.session.add(db_workshop)
         await self.session.commit()
@@ -57,28 +55,22 @@ class WorkshopRepository:
         workshop = result.scalars().first()
         return workshop
 
-    async def update(
-        self, workshop_id: str, workshop_update: UpdateWorkshopScheme
-    ) -> tuple[Workshop | None, WorkshopEnum]:
+    async def update(self, workshop_id: str, workshop_update: UpdateWorkshop) -> tuple[Workshop | None, WorkshopEnum]:
         workshop = await self.get(workshop_id)
         if not workshop:
             return None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST
 
         logger.info(f"Updating workshop data. Current data: {workshop}")
-        workshop_dump = workshop_update.model_dump()
 
-        # Check that current number of checked in users is not greater than new capacity
-        if (
-            workshop_dump["capacity"] is not None
-            and workshop_dump["capacity"] < workshop.capacity - workshop.remain_places
-        ):
-            return None, WorkshopEnum.INVALID_CAPACITY_FOR_UPDATE
+        if workshop_update.capacity is not None:
+            # Check if new capacity would be less than current registrations
+            current_registrations = workshop.capacity - workshop.remain_places
+            if workshop_update.capacity < current_registrations:
+                return None, WorkshopEnum.INVALID_CAPACITY_FOR_UPDATE
 
-        # Recalculating the "remain_places" value
-        if workshop_dump["capacity"] is not None:
-            workshop.remain_places = workshop.remain_places - (workshop.capacity - workshop_dump["capacity"])
+            workshop.capacity = workshop_update.capacity
 
-        for key, value in workshop_dump.items():
+        for key, value in workshop_update.model_dump(exclude_unset=True).items():
             if value is not None:
                 setattr(workshop, key, value)
 
@@ -100,7 +92,7 @@ class WorkshopRepository:
             return None
 
         workshop.is_active = active
-        workshop.remain_places = workshop.capacity  # Reset remaining places to capacity
+        # No need to reset remain_places since it's calculated on the fly
 
         self.session.add(workshop)
         await self.session.commit()
@@ -153,10 +145,6 @@ class WorkshopRepository:
         await self.session.commit()
         await self.session.refresh(checkin)
 
-        workshop.remain_places -= 1
-        self.session.add(workshop)
-        await self.session.commit()
-
         return CheckInEnum.SUCCESS
 
     async def check_out(self, user_id: str, workshop_id: str) -> CheckInEnum:
@@ -170,10 +158,6 @@ class WorkshopRepository:
 
         checkin = await self.session.get(WorkshopCheckin, (user_id, workshop_id))
         await self.session.delete(checkin)
-        await self.session.commit()
-
-        workshop.remain_places += 1
-        self.session.add(workshop)
         await self.session.commit()
 
         return CheckInEnum.SUCCESS

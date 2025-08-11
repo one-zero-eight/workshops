@@ -1,14 +1,15 @@
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
 from src.modules.workshops.repository import WorkshopRepository
-from src.modules.workshops.schemas import CreateWorkshopScheme, UpdateWorkshopScheme
-from src.storages.sql.models import User, Workshop
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, Workshop
 
 
 async def test_create_workshop(
     workshop_repository: WorkshopRepository,
-    workshop_data_to_create: CreateWorkshopScheme,
+    workshop_data_to_create: CreateWorkshop,
 ):
     workshop, status = await workshop_repository.create(workshop_data_to_create)
     assert status == WorkshopEnum.CREATED
@@ -36,7 +37,7 @@ async def test_get_workshop_by_id(
 async def test_update_workshop(
     workshop_repository: WorkshopRepository,
     already_created_workshop: Workshop,
-    workshop_data_to_update: UpdateWorkshopScheme,
+    workshop_data_to_update: UpdateWorkshop,
 ):
     workshop_updated, status = await workshop_repository.update(already_created_workshop.id, workshop_data_to_update)
     assert status == WorkshopEnum.UPDATED
@@ -69,13 +70,24 @@ async def test_check_in(
     workshop_repository: WorkshopRepository,
     already_created_workshop: Workshop,
     user: User,
+    async_session: AsyncSession,
 ):
     status = await workshop_repository.check_in(user.innohassle_id, already_created_workshop.id)
     assert status == CheckInEnum.SUCCESS
-    assert already_created_workshop.remain_places == (already_created_workshop.capacity - 1)
+
+    # get checkins count
+    checkins = await workshop_repository.get_checked_in_workshops(user.innohassle_id)
+    assert len(checkins) == 1
+    assert checkins[0].id == already_created_workshop.id
+
+    await async_session.refresh(already_created_workshop)
+    assert already_created_workshop.remain_places == already_created_workshop.capacity - 1
 
     status = await workshop_repository.check_out(user.innohassle_id, already_created_workshop.id)
     assert status == CheckInEnum.SUCCESS
+
+    # Refresh workshop again to get updated checkins for remain_places calculation
+    await async_session.refresh(already_created_workshop)
     assert already_created_workshop.remain_places == already_created_workshop.capacity
 
 
@@ -103,7 +115,7 @@ async def test_check_in_no_places(
     already_created_workshop: Workshop,
     user: User,
 ):
-    await workshop_repository.update(already_created_workshop.id, UpdateWorkshopScheme(capacity=0))
+    await workshop_repository.update(already_created_workshop.id, UpdateWorkshop(capacity=0))
     status = await workshop_repository.check_in(user.innohassle_id, already_created_workshop.id)
     assert status == CheckInEnum.NO_PLACES
 
@@ -115,7 +127,7 @@ async def test_check_in_invalid_time(
 ):
     await workshop_repository.update(
         already_created_workshop.id,
-        UpdateWorkshopScheme(
+        UpdateWorkshop(
             dtstart=datetime.now(UTC) + timedelta(days=360 * 4),
             dtend=datetime.now(UTC) + timedelta(days=360 * 4, hours=1),
         ),
@@ -146,12 +158,11 @@ async def test_check_in_overlapping_workshops(
     assert status == CheckInEnum.ALREADY_CHECKED_IN
 
     second_workshop, status = await workshop_repository.create(
-        CreateWorkshopScheme(
+        CreateWorkshop(
             name="Name",
             description="Description",
             dtstart=already_created_workshop.dtstart,
             dtend=already_created_workshop.dtend,
-            is_active=True,
             place="Place",
         )
     )

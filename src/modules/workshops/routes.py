@@ -8,12 +8,7 @@ from src.api.dependencies import (
 from src.logging_ import logger
 from src.modules.users.schemas import ViewUserScheme
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
-from src.modules.workshops.schemas import (
-    CreateWorkshopScheme,
-    ReadWorkshopScheme,
-    UpdateWorkshopScheme,
-)
-from src.storages.sql.models import UserRole, Workshop
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, UserRole, Workshop
 
 router = APIRouter(prefix="/workshops", tags=["Workshops"])
 
@@ -21,7 +16,6 @@ router = APIRouter(prefix="/workshops", tags=["Workshops"])
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=ReadWorkshopScheme,
     responses={
         status.HTTP_201_CREATED: {"description": "Workshop successfully created"},
         status.HTTP_400_BAD_REQUEST: {"description": "Workshop creation failed"},
@@ -31,7 +25,7 @@ router = APIRouter(prefix="/workshops", tags=["Workshops"])
 )
 async def add_workshop(
     workshop_repo: WorkshopRepositoryDep,
-    workshop_create: CreateWorkshopScheme,
+    workshop_create: CreateWorkshop,
     _: AdminDep,
 ) -> Workshop:
     """
@@ -71,7 +65,7 @@ async def get_all_workshops(
 )
 async def update_workshop(
     workshop_id: str,
-    workshop: UpdateWorkshopScheme,
+    workshop: UpdateWorkshop,
     _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
 ) -> Workshop:

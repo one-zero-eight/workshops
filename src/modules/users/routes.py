@@ -2,8 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.api.dependencies import CurrentUserDep, UsersRepositoryDep, WorkshopRepositoryDep
 from src.config import settings
-from src.modules.workshops.schemas import ReadWorkshopScheme
-from src.storages.sql.models import User, UserRole
+from src.storages.sql.models import User, UserRole, Workshop
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -26,9 +25,9 @@ async def get_me(user: CurrentUserDep) -> User:
 async def get_my_checkins(
     workshop_repo: WorkshopRepositoryDep,
     user: CurrentUserDep,
-) -> list[ReadWorkshopScheme]:
+) -> list[Workshop]:
     workshops = await workshop_repo.get_checked_in_workshops(user.innohassle_id)
-    return [ReadWorkshopScheme.model_validate(workshop) for workshop in workshops]
+    return list(workshops)
 
 
 @router.post(
