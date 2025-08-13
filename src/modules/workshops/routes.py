@@ -77,47 +77,6 @@ async def update_workshop(
     return updatedWorkshop
 
 
-@router.post(
-    "/{workshop_id}/activate",
-    responses={
-        status.HTTP_200_OK: {"description": "Workshop activated"},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
-        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
-        status.HTTP_403_FORBIDDEN: {"description": "Not authorized (admin required)"},
-    },
-)
-async def activate_workshop(
-    workshop_id: str,
-    _: AdminDep,
-    workshop_repo: WorkshopRepositoryDep,
-) -> Workshop:
-    workshop = await workshop_repo.set_active(workshop_id, True)
-    if not workshop:
-        raise HTTPException(status_code=404, detail=WorkshopEnum.WORKSHOP_DOES_NOT_EXIST.value)
-    return workshop
-
-
-@router.post(
-    "/{workshop_id}/deactivate",
-    responses={
-        status.HTTP_200_OK: {"description": "Workshop deactivated"},
-        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
-        status.HTTP_403_FORBIDDEN: {"description": "Not authorized (admin required)"},
-    },
-)
-async def deactivate_workshop(
-    workshop_id: str,
-    _: AdminDep,
-    workshop_repo: WorkshopRepositoryDep,
-) -> Workshop:
-    workshop = await workshop_repo.set_active(workshop_id, False)
-    if not workshop:
-        logger.error("Failed during deactivating workshop.")
-        raise HTTPException(status_code=404, detail="Workshop not found")
-    return workshop
-
-
 @router.delete(
     "/{workshop_id}",
     responses={

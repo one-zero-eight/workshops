@@ -63,32 +63,6 @@ async def test_update_workshop_not_found(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-async def test_activate_workshop_success(admin_authenticated_client: AsyncClient, already_created_workshop: Workshop):
-    response = await admin_authenticated_client.post(f"/workshops/{already_created_workshop.id}/activate")
-    assert response.status_code == status.HTTP_200_OK
-    resp_json = response.json()
-    assert resp_json["is_active"] is True
-
-
-async def test_activate_workshop_fail(admin_authenticated_client: AsyncClient, already_created_workshop: Workshop):
-    response = await admin_authenticated_client.post("/workshops/nonexistent_id/activate")
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-
-
-async def test_deactivate_workshop_success(admin_authenticated_client: AsyncClient, already_created_workshop: Workshop):
-    # First activate
-    await admin_authenticated_client.post(f"/workshops/{already_created_workshop.id}/activate")
-    response = await admin_authenticated_client.post(f"/workshops/{already_created_workshop.id}/deactivate")
-    assert response.status_code == status.HTTP_200_OK
-    resp_json = response.json()
-    assert resp_json["is_active"] is False
-
-
-async def test_deactivate_workshop_fail(admin_authenticated_client: AsyncClient, already_created_workshop: Workshop):
-    response = await admin_authenticated_client.post("/workshops/nonexistent_id/deactivate")
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-
-
 async def test_delete_workshop_success(admin_authenticated_client: AsyncClient, already_created_workshop: Workshop):
     response = await admin_authenticated_client.delete(f"/workshops/{already_created_workshop.id}")
     assert response.status_code == status.HTTP_200_OK

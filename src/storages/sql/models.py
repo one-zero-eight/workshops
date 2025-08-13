@@ -116,6 +116,8 @@ class UpdateWorkshop(Base):
     "Optional location where the workshop takes place"
     capacity: int | None = None
     "Maximum number of attendees allowed for the workshop"
+    is_active: bool | None = None
+    "Marks whether the workshop is currently active (visible for users)"
 
     @model_validator(mode="before")
     @classmethod
