@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from src.api.dependencies import CurrentUserDep, UsersRepositoryDep, WorkshopRepositoryDep
+from src.api.dependencies import ApiKeyDep, CurrentUserDep, UsersRepositoryDep, WorkshopRepositoryDep
 from src.config import settings
 from src.storages.sql.models import User, UserRole, Workshop
 
@@ -54,3 +54,24 @@ async def change_role(
         raise HTTPException(status_code=404, detail="User to change not found")
     await users_repo.change_role_of_user(user_to_change, role)
     return user_to_change
+
+
+@router.get(
+    "/{user_id}/checkins",
+    responses={
+        status.HTTP_200_OK: {"description": "User's check-ins retrieved successfully"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_404_NOT_FOUND: {"description": "User not found"},
+    },
+)
+async def get_user_checkins(
+    user_id: str,
+    user_repo: UsersRepositoryDep,
+    workshop_repo: WorkshopRepositoryDep,
+    _api_dep: ApiKeyDep,
+) -> list[Workshop]:
+    user = await user_repo.read_by_innohassle_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    workshops = await workshop_repo.get_checked_in_workshops(user_id)
+    return list(workshops)

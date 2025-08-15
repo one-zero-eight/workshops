@@ -57,8 +57,15 @@ properties:
       type: string
     title: Superadmin Emails
     type: array
+  api_key:
+    description: Secret key for accessing API by external services
+    format: password
+    title: Api Key
+    type: string
+    writeOnly: true
 required:
 - db_url
 - accounts
+- api_key
 title: Settings
 type: object

@@ -43,6 +43,8 @@ class Settings(SettingBaseModel):
     "InNoHassle Accounts integration settings"
     superadmin_emails: list[str] = []
     "List of superadmin emails"
+    api_key: SecretStr
+    "Secret key for accessing API by external services"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":

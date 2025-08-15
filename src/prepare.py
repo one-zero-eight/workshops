@@ -1,5 +1,6 @@
 import asyncio
 import os
+import secrets
 import shutil
 import subprocess
 import webbrowser
@@ -198,8 +199,28 @@ def check_database_access():
     asyncio.run(test_connection())
 
 
+def check_and_generate_api_key():
+    """
+    Check if `api_key` is set in `settings.yaml`.
+    """
+    settings = get_settings()
+    api_key = settings.get("api_key")
+
+    if not api_key or api_key == "...":
+        print("⚠️ `api_key` is missing in `settings.yaml`. Generating a new one.")
+        api_key = secrets.token_hex(32)
+        with open(SETTINGS_FILE) as f:
+            as_text = f.read()
+        as_text = as_text.replace("api_key: null", f"api_key: {api_key}")
+        as_text = as_text.replace("api_key: ...", f"api_key: {api_key}")
+        with open(SETTINGS_FILE, "w") as f:
+            f.write(as_text)
+        print("  ✅ `api_key` has been updated in `settings.yaml`.")
+
+
 def prepare():
     ensure_settings_file()
     ensure_pre_commit_hooks()
     check_and_prompt_api_jwt_token()
     check_database_access()
+    check_and_generate_api_key()
