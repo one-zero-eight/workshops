@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, update
+from sqlmodel import select
 
 from src.logging_ import logger
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
@@ -13,27 +13,9 @@ class WorkshopRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def _update_is_registrable_flag(self):
-        now = datetime.now(UTC)
-        offset = now + timedelta(days=1)
-        stmt = (
-            update(Workshop)
-            .where(Workshop.dtstart >= datetime.now(UTC))  # type: ignore
-            .where(Workshop.dtstart < offset)  # type: ignore
-            .values(is_registrable=True)
-        )
-
-        await self.session.execute(stmt)
-
-        stmt_disable = (
-            update(Workshop)
-            .where(Workshop.dtstart < now)  # type: ignore
-            .values(is_registrable=False)
-        )
-        await self.session.execute(stmt_disable)
-        await self.session.commit()
-
     async def create(self, workshop: CreateWorkshop) -> tuple[Workshop | None, WorkshopEnum]:
+        if not workshop.capacity:
+            workshop.capacity = 10**6
         db_workshop = Workshop.model_validate(workshop.model_dump(exclude_unset=True))
 
         self.session.add(db_workshop)
@@ -43,8 +25,6 @@ class WorkshopRepository:
         return db_workshop, WorkshopEnum.CREATED
 
     async def get_all(self, limit: int = 100) -> Sequence[Workshop]:
-        await self._update_is_registrable_flag()
-
         query = select(Workshop)
         result = await self.session.execute(query.limit(limit=limit))
         return result.scalars().all()
@@ -73,10 +53,6 @@ class WorkshopRepository:
         for key, value in workshop_update.model_dump(exclude_unset=True).items():
             if value is not None:
                 setattr(workshop, key, value)
-
-        offset = datetime.now(UTC) + timedelta(days=1)
-        if workshop.dtstart > offset:
-            workshop.is_registrable = False
 
         self.session.add(workshop)
         await self.session.commit()
@@ -136,9 +112,16 @@ class WorkshopRepository:
             return CheckInEnum.ALREADY_CHECKED_IN
 
         checked_in_workshops = await self.get_checked_in_workshops(user_id)
-        for other in checked_in_workshops:
-            if other.dtstart <= workshop.dtend and workshop.dtstart <= other.dtend:
-                return CheckInEnum.OVERLAPPING_WORKSHOPS
+        for other in checked_in_workshops:  # block only overlap more than 1 minute
+            if other.dtend < workshop.dtstart:
+                continue
+            elif other.dtstart > workshop.dtend:
+                continue
+            else:
+                overlap_start = max(other.dtstart, workshop.dtstart)
+                overlap_end = min(other.dtend, workshop.dtend)
+                if overlap_end - overlap_start > timedelta(minutes=1):
+                    return CheckInEnum.OVERLAPPING_WORKSHOPS
 
         checkin = WorkshopCheckin(user_id=user_id, workshop_id=workshop.id)
         self.session.add(checkin)

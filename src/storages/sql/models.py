@@ -63,8 +63,6 @@ class Workshop(Base, table=True):
     "Maximum number of attendees allowed for the workshop"
     is_active: bool = True
     "Marks whether the workshop is currently active (visible for users)"
-    is_registrable: bool = False
-    "Marks whether users can register to the workshop"
     checkins: list["WorkshopCheckin"] = Relationship(back_populates="workshop", cascade_delete=True)
     "List of check-in records associated with this workshop"
     created_at: datetime.datetime = Field(default_factory=utcnow, sa_column=Column(DateTime(timezone=True)))
@@ -73,6 +71,19 @@ class Workshop(Base, table=True):
     @computed_field
     def remain_places(self) -> int:
         return self.capacity - self._checkins_count
+
+    @computed_field
+    def is_registrable(self) -> bool:
+        """
+        Marks whether users can register to the workshop.
+        Can be register only within 1 day before the workshop, and cannot be register after the workshop.
+        """
+        _now = datetime.datetime.now(datetime.UTC)
+        if _now > self.dtend:
+            return False
+        if self.dtstart - _now > datetime.timedelta(days=1):
+            return False
+        return True
 
     @model_validator(mode="after")
     def validate_time(self):
