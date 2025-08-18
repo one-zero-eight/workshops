@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, HTTPException, status
 
 from src.api.dependencies import (
@@ -6,6 +8,7 @@ from src.api.dependencies import (
     WorkshopRepositoryDep,
 )
 from src.logging_ import logger
+from src.modules.inh_accounts_sdk import inh_accounts
 from src.modules.users.schemas import ViewUserScheme
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
 from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, UserRole, Workshop
@@ -167,4 +170,14 @@ async def get_all_check_ins(
     if user.role != UserRole.admin:
         for u in validated:
             u.telegram_username = None  # set to None for non-admins to avoid leaking info
+            u.name = None
+    else:
+        user_info_tasks = [inh_accounts.get_user(email=u.email) for u in validated]
+        user_infos = await asyncio.gather(*user_info_tasks, return_exceptions=True)
+
+        for u, user_info in zip(validated, user_infos):
+            if isinstance(user_info, BaseException):
+                continue
+            if user_info and user_info.innopolis_sso:
+                u.name = user_info.innopolis_sso.name
     return validated

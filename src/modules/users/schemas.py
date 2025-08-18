@@ -16,3 +16,5 @@ class ViewUserScheme(SQLModel):
     email: str
     telegram_username: str | None
     "Will be shown only for admins"
+    name: str | None
+    "Will be shown only for admins"
