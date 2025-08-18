@@ -14,7 +14,7 @@ class ViewUserScheme(SQLModel):
     innohassle_id: str
     role: UserRole
     email: str
-    telegram_username: str | None
+    telegram_username: str | None = None
     "Will be shown only for admins"
-    name: str | None
+    name: str | None = None
     "Will be shown only for admins"
