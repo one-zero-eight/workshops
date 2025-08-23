@@ -33,8 +33,6 @@ jobs:
           activate-environment: true
       - name: 📦 Install the project
         run: uv sync --dev
-      - name: 📦 Install pytest dependencies
-        run: uv pip install pytest pytest-cov
       - name: 📦 Run migrations
         run: uv run alembic upgrade head
       - name: 🧪 Run Tests
