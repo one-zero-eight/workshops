@@ -103,8 +103,8 @@ class WorkshopRepository:
             return CheckInEnum.NOT_ACTIVE
         if workshop.remain_places <= 0:
             return CheckInEnum.NO_PLACES
-        if workshop.dtstart >= datetime.now(UTC) + timedelta(days=1):
-            return CheckInEnum.INVALID_TIME
+        # if workshop.dtstart >= datetime.now(UTC) + timedelta(days=1):
+        #     return CheckInEnum.INVALID_TIME  # Can check in only 1 day before workshop
         if workshop.dtstart < datetime.now(UTC):
             return CheckInEnum.TIME_IS_OVER
 
