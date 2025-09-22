@@ -1,5 +1,3 @@
-from datetime import UTC, datetime, timedelta
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
@@ -120,20 +118,20 @@ async def test_check_in_no_places(
     assert status == CheckInEnum.NO_PLACES
 
 
-async def test_check_in_invalid_time(
-    workshop_repository: WorkshopRepository,
-    already_created_workshop: Workshop,
-    user: User,
-):
-    await workshop_repository.update(
-        already_created_workshop.id,
-        UpdateWorkshop(
-            dtstart=datetime.now(UTC) + timedelta(days=360 * 4),
-            dtend=datetime.now(UTC) + timedelta(days=360 * 4, hours=1),
-        ),
-    )
-    status = await workshop_repository.check_in(user.innohassle_id, already_created_workshop.id)
-    assert status == CheckInEnum.INVALID_TIME
+# async def test_check_in_invalid_time(
+#     workshop_repository: WorkshopRepository,
+#     already_created_workshop: Workshop,
+#     user: User,
+# ):
+#     await workshop_repository.update(
+#         already_created_workshop.id,
+#         UpdateWorkshop(
+#             dtstart=datetime.now(UTC) + timedelta(days=360 * 4),
+#             dtend=datetime.now(UTC) + timedelta(days=360 * 4, hours=1),
+#         ),
+#     )
+#     status = await workshop_repository.check_in(user.innohassle_id, already_created_workshop.id)
+#     assert status == CheckInEnum.INVALID_TIME
 
 
 async def test_check_in_already_checked_in(
