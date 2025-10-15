@@ -24,15 +24,14 @@ jobs:
       SETTINGS_PATH: settings.test.yaml
     steps:
       - name: 👾 Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: 📦 Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.13"
           enable-cache: true
           activate-environment: true
       - name: 📦 Install the project
-        run: uv sync --dev
+        run: uv sync
       - name: 📦 Run migrations
         run: uv run alembic upgrade head
       - name: 🧪 Run Tests
