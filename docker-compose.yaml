@@ -1,0 +1,47 @@
+# This is a Docker Compose configuration for local use.
+
+# Run all services:
+# docker compose up --build --wait
+
+services:
+  api:
+    build: .
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+      alembic-migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8005:8000"
+    volumes:
+      - "./settings.yaml:/app/settings.yaml:ro" # Read-only settings file
+
+  alembic-migrate:
+    build: .
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - "./settings.yaml:/app/settings.yaml:ro" # Read-only settings file
+    command: alembic upgrade head
+
+  db:
+    # See more: https://hub.docker.com/_/postgres
+    image: "postgres:17.1"
+    restart: no
+    ports:
+      - "5432:5432"
+    volumes:
+      - "postgres:/var/lib/postgresql/data"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      timeout: 5s
+      start_period: 30s
+      interval: 1m
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+volumes:
+  postgres:

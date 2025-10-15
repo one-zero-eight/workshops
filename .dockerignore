@@ -7,7 +7,6 @@
 !/uv.lock
 !/alembic/
 !/alembic.ini
-!logging.yaml
 
 # And ignore cache files in the code
 __pycache__

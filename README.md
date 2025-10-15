@@ -1,4 +1,4 @@
-# Workshops API | InNoHassle ecosystem
+# Workshops
 
 > https://api.innohassle.ru/workshops/v0
 
@@ -25,23 +25,27 @@ This is the API for workshops service in InNoHassle ecosystem. It provides backe
 
 ### Technologies
 
-- [Python 3.13+](https://www.python.org/downloads/) & [uv](https://astral.sh/uv/)
+- [Python 3.14](https://www.python.org/downloads/) & [uv](https://docs.astral.sh/uv/)
 - [FastAPI](https://fastapi.tiangolo.com/)
 - Database and ORM: [PostgreSQL](https://www.postgresql.org/), [SQLModel](https://sqlmodel.tiangolo.com/), [SQLAlchemy](https://www.sqlalchemy.org/), [Alembic](https://alembic.sqlalchemy.org/)
+- Formatting and linting: [Ruff](https://docs.astral.sh/ruff/), [pre-commit](https://pre-commit.com/)
+- Deployment: [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/),
+  [GitHub Actions](https://github.com/features/actions)
 
 ## Development
 
 ### Set up for development
 
-1. Install [uv](https://astral.sh/uv/) and [Docker](https://docs.docker.com/engine/install/)
+1. Install [uv](https://docs.astral.sh/uv/) and [Docker](https://docs.docker.com/engine/install/)
 2. Install dependencies:
    ```bash
    uv sync
    ```
-3. Start development server (read logs in the terminal):
+3. Start development server (and read logs in the terminal):
    ```bash
    uv run -m src.api --reload
    ```
+   > Follow the provided instructions (if needed).
 4. Open in the browser: http://localhost:8005
    > The api will be reloaded when you edit the code
 
@@ -63,7 +67,32 @@ This is the API for workshops service in InNoHassle ecosystem. It provides backe
 4. Conventional commits ([plugin](https://plugins.jetbrains.com/plugin/13389-conventional-commit)). It will help you
    to write [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
+### Deployment
+
+We use Docker with Docker Compose plugin to run the service on servers.
+
+1. Copy the file with environment variables: `cp .example.env .env`
+2. Change environment variables in the `.env` file
+3. Copy the file with settings: `cp settings.example.yaml settings.yaml`
+4. Change settings in the `settings.yaml` file according to your needs
+   (check [settings.schema.yaml](settings.schema.yaml) for more info)
+5. Install Docker with Docker Compose
+6. Run the containers: `docker compose up --build --wait`
+7. Check the logs: `docker compose logs -f`
+
 ## FAQ
+
+### Be up to date with the template!
+
+Check https://github.com/one-zero-eight/fastapi-template for updates once in a while.
+
+### How to update dependencies
+
+1. Run `uv sync --upgrade` to update uv.lock file and install the latest versions of the dependencies.
+2. Run `uv tree --outdated --depth=1` will show what package versions are installed and what are the latest versions.
+3. Run `uv run pre-commit autoupdate`
+
+Also, Dependabot will help you to keep your dependencies up-to-date, see [dependabot.yaml](.github/dependabot.yaml).
 
 ### How to run tests?
 

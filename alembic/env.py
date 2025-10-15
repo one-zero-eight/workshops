@@ -33,7 +33,7 @@ config.set_main_option("sqlalchemy.url", app_settings["db_url"])
 # target_metadata = mymodel.Base.metadata
 from sqlmodel import SQLModel  # noqa: E402
 
-from src.storages.sql.models import *  # noqa: E402
+import src.storages.sql.models  # noqa: E402, F401
 
 target_metadata = SQLModel.metadata
 
