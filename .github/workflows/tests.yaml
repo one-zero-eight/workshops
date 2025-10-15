@@ -1,10 +1,12 @@
-name: Test
+name: Run tests
 
 on: [ push, pull_request ]
 
 jobs:
   test:
+    name: Run pytest
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:17.1
@@ -25,15 +27,19 @@ jobs:
     steps:
       - name: 👾 Check out repository
         uses: actions/checkout@v5
+
       - name: 📦 Set up uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           activate-environment: true
+
       - name: 📦 Install the project
         run: uv sync
+
       - name: 📦 Run migrations
         run: uv run alembic upgrade head
+
       - name: 🧪 Run Tests
         run: uv run pytest
       - name: 📊 Generate and Check Coverage
@@ -45,6 +51,7 @@ jobs:
           uv run coverage report --fail-under=60
           # Show detailed report
           uv run coverage report
+
       - name: 📤 Upload Coverage Reports
         uses: actions/upload-artifact@v4
         with:
