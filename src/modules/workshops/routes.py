@@ -58,6 +58,25 @@ async def get_all_workshops(
     return list(workshops)
 
 
+@router.get(
+    "/{workshop_id}",
+    responses={
+        status.HTTP_200_OK: {"description": "Workshop retrieved successfully"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+    }
+)
+async def get_workshop(
+    workshop_id: str,
+    workshop_repo: WorkshopRepositoryDep,
+    _: CurrentUserDep,
+) -> Workshop | None:
+    workshop = await workshop_repo.get(workshop_id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+    return workshop
+
+
 @router.put(
     "/{workshop_id}",
     responses={
