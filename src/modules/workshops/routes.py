@@ -51,6 +51,7 @@ async def add_workshop(
 )
 async def get_all_workshops(
     workshop_repo: WorkshopRepositoryDep,
+    _: CurrentUserDep,
     limit: int = 100,
 ) -> list[Workshop]:
     workshops = await workshop_repo.get_all(limit)
