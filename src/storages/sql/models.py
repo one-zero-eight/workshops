@@ -25,6 +25,7 @@ class UserRole(StrEnum):
 class WorkshopLanguage(StrEnum):
     english = "english"
     russian = "russian"
+    both = "both"
 
 
 HEX6 = re.compile(r"^#[0-9A-Fa-f]{6}$")
