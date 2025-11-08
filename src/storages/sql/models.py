@@ -214,7 +214,7 @@ class UpdateWorkshop(Base):
     "Date and time when the workshop begins"
     dtend: datetime.datetime | None = None
     "Date and time when the workshop ends (must be later than dtstart)"
-    check_in_opens: datetime.datetime | None
+    check_in_opens: datetime.datetime | None = None
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
     place: str | None = None
     "Optional location where the workshop takes place"
@@ -236,7 +236,7 @@ class UpdateWorkshop(Base):
             raise ValueError("`dtstart` and `dtend` must be provided")
         if data["dtstart"] >= data["dtend"]:
             raise ValueError("`dtstart` must be less than `dtend`")
-        if data["check_in_opens"] >= data["dtstart"]:
+        if data.get("check_in_opens") is not None and data["check_in_opens"] >= data["dtstart"]:
             raise ValueError("`check_in_opens` must be less than `dtstart`")
         return data
 
