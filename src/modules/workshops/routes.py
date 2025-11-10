@@ -46,12 +46,10 @@ async def add_workshop(
     "/",
     responses={
         status.HTTP_200_OK: {"description": "All workshops retrieved successfully"},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
     },
 )
 async def get_all_workshops(
     workshop_repo: WorkshopRepositoryDep,
-    _: CurrentUserDep,
     limit: int = 100,
 ) -> list[Workshop]:
     workshops = await workshop_repo.get_all(limit)
@@ -63,13 +61,11 @@ async def get_all_workshops(
     responses={
         status.HTTP_200_OK: {"description": "Workshop retrieved successfully"},
         status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
     }
 )
 async def get_workshop(
     workshop_id: str,
     workshop_repo: WorkshopRepositoryDep,
-    _: CurrentUserDep,
 ) -> Workshop | None:
     workshop = await workshop_repo.get(workshop_id)
     if not workshop:
