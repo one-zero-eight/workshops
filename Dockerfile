@@ -10,6 +10,8 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         build-essential \
+        libmagic1 \
+        libvips-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

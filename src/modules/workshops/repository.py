@@ -154,3 +154,13 @@ class WorkshopRepository:
         statement = select(User).join(WorkshopCheckin).where(WorkshopCheckin.workshop_id == workshop_id)
         result = await self.session.execute(statement)
         return result.scalars().all()
+
+    async def update_image_file_id(self, workshop_id: str, image_file_id: str) -> tuple[Workshop | None, WorkshopEnum]:
+        workshop = await self.get(workshop_id)
+        if not workshop:
+            return None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST
+
+        workshop.image_file_id = image_file_id
+        await self.session.commit()
+        await self.session.refresh(workshop)
+        return workshop, WorkshopEnum.UPDATED

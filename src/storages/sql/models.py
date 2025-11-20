@@ -150,6 +150,8 @@ class Workshop(Base, table=True):
     "Marks whether the workshop is currently active (visible for users)"
     is_draft: bool = False
     "Marks whether the workshop is currently in draft phase (visible only for author)"
+    image_file_id: str | None = None
+    "File ID of the event image"
     checkins: list["WorkshopCheckin"] = Relationship(back_populates="workshop", cascade_delete=True)
     "List of check-in records associated with this workshop"
     created_at: datetime.datetime = Field(default_factory=utcnow, sa_column=Column(DateTime(timezone=True)))

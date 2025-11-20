@@ -6,6 +6,7 @@ import subprocess
 import webbrowser
 from pathlib import Path
 
+import urllib3
 import yaml
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -199,6 +200,65 @@ def check_database_access():
     asyncio.run(test_connection())
 
 
+def check_minio_access():
+    """
+    Ensure MinIO is accessible using `minio.endpoint` from settings.
+    If not, attempt to start the `minio` container via Docker Compose.
+    """
+    settings = get_settings()
+    minio_settings = settings.get("minio")
+    endpoint = minio_settings.get("endpoint").replace("http://", "").replace("https://", "")
+    health_url = f"http://{endpoint}/minio/health/live"
+
+    http = urllib3.PoolManager()
+
+    def get_docker_compose_command():
+        commands = ["docker compose", "docker-compose"]
+        for cmd in commands:
+            try:
+                subprocess.run(cmd.split(), check=True, text=True, capture_output=True)
+                return cmd
+            except subprocess.CalledProcessError:
+                continue
+        return None
+
+    async def test_connection():
+        try:
+            resp = http.request("GET", health_url, timeout=1.0, retries=False)
+            if resp.status == 200:
+                print("✅ Successfully connected to MinIO.")
+            else:
+                raise Exception(f"Health check returned status {resp.status}")
+        except Exception:
+            print(f"⚠️ Failed to connect to MinIO at `{health_url}`")
+            docker_compose = get_docker_compose_command()
+
+            if docker_compose:
+                print(f"  ➡ Attempting to start MinIO using `{docker_compose} up -d minio` (wait for it)")
+                try:
+                    subprocess.run(
+                        [*docker_compose.split(), "up", "-d", "--wait", "minio"],
+                        check=True,
+                        text=True,
+                        capture_output=True,
+                    )
+                    print(f"  ✅ `{docker_compose} up -d minio` executed successfully. Retrying connection...")
+
+                    resp = http.request("GET", health_url, timeout=2.0, retries=3)
+                    if resp.status == 200:
+                        print("  ✅ Successfully connected to MinIO after starting the container.")
+                    else:
+                        print(f"  ❌ MinIO started but returned status {resp.status}.")
+                except subprocess.CalledProcessError as docker_error:
+                    print(f"  ❌ Failed to start MinIO using `{docker_compose} up -d minio`:\n  {docker_error.stderr}")
+                except Exception as retry_error:
+                    print(f"  ❌ Retried MinIO connection but failed again:\n  {retry_error}")
+            else:
+                print("  ❌ Docker Compose is not available, so not able to start MinIO automatically.")
+
+    asyncio.run(test_connection())
+
+
 def check_and_generate_api_key():
     """
     Check if `api_key` is set in `settings.yaml`.
@@ -223,4 +283,5 @@ def prepare():
     ensure_pre_commit_hooks()
     check_and_prompt_api_jwt_token()
     check_database_access()
+    check_minio_access()
     check_and_generate_api_key()

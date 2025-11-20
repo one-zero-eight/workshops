@@ -23,6 +23,23 @@ class Accounts(SettingBaseModel):
     "JWT token for accessing the Accounts API as a service"
 
 
+class MinioSettings(SettingBaseModel):
+    endpoint: str = "127.0.0.1:9000"
+    "URL of the target service."
+    secure: bool = False
+    "Use https connection to the service."
+    region: str | None = None
+    "Region of the service."
+    bucket: str = "search"
+    "Name of the bucket in the service."
+    access_key: str = Field(..., examples=["minioadmin"])
+    "Access key (user ID) of a user account in the service."
+    secret_key: SecretStr = Field(..., examples=["password"])
+    "Secret key (password) for the user account."
+
+    event_images_prefix: str = "event_images/"
+
+
 class Settings(SettingBaseModel):
     """Settings for the application."""
 
@@ -45,6 +62,8 @@ class Settings(SettingBaseModel):
     "List of superadmin emails"
     api_key: SecretStr
     "Secret key for accessing API by external services"
+    minio: MinioSettings
+    "Configuration for S3 object storage"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":

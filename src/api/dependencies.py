@@ -1,4 +1,4 @@
-__all__ = ["CurrentUserDep", "current_user_dep"]
+__all__ = ["CurrentUserDep", "current_user_dep", "AdminDep", "WorkshopRepositoryDep"]
 
 from typing import Annotated
 

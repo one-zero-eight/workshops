@@ -1,7 +1,11 @@
 import asyncio
 
-from fastapi import APIRouter, HTTPException, status
+import magic
+import pyvips
+from fastapi import APIRouter, HTTPException, UploadFile, status
+from starlette.responses import RedirectResponse
 
+import src.modules.workshops.minio as minio
 from src.api.dependencies import (
     AdminDep,
     CurrentUserDep,
@@ -197,3 +201,66 @@ async def get_all_check_ins(
             if user_info and user_info.innopolis_sso:
                 u.name = user_info.innopolis_sso.name
     return validated
+
+
+@router.get(
+    "/{workshop_id}/image",
+    responses={
+        status.HTTP_307_TEMPORARY_REDIRECT: {"description": "Redirect to the event image"},
+        status.HTTP_404_NOT_FOUND: {"description": "Event not found or no logo available"},
+    },
+    response_model=None,
+)
+async def get_event_image(
+    workshop_id: str,
+    workshop_repo: WorkshopRepositoryDep,
+):
+    workshop = await workshop_repo.get(workshop_id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+
+    if not workshop.image_file_id:
+        raise HTTPException(status_code=404, detail="No image available")
+
+    return RedirectResponse(url=minio.get_event_picture_url(workshop.image_file_id))
+
+
+@router.post(
+    "/{workshop_id}/image",
+    responses={
+        status.HTTP_200_OK: {"description": "Changed event image successfully"},
+        status.HTTP_400_BAD_REQUEST: {"description": "Invalid content type"},
+        status.HTTP_403_FORBIDDEN: {"description": "Only admin can change event image"},
+        status.HTTP_404_NOT_FOUND: {"description": "Event not found"},
+    },
+)
+async def set_event_image(
+    workshop_id: str,
+    image_file: UploadFile,
+    workshop_repo: WorkshopRepositoryDep,
+    _: AdminDep,
+) -> Workshop:
+    workshop = await workshop_repo.get(workshop_id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+
+    bytes_ = await image_file.read()
+    content_type = image_file.content_type
+    if content_type is None:
+        content_type = magic.Magic(mime=True).from_buffer(bytes_)
+
+    supported_content_types = ["image/jpeg", "image/png", "image/webp"]
+    if content_type not in supported_content_types:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid content type ({content_type}), must be one of {supported_content_types}"
+        )
+
+    # Convert to webp
+    image: pyvips.Image = pyvips.Image.new_from_buffer(bytes_, "")
+    image_bytes = image.write_to_buffer(".webp")
+
+    # Save file
+    image_file_id = workshop_id
+    minio.put_event_picture(image_file_id, image_bytes, "image/webp")
+    await workshop_repo.update_image_file_id(workshop_id, image_file_id)
+    return workshop
