@@ -61,7 +61,7 @@ async def get_all_workshops(
     responses={
         status.HTTP_200_OK: {"description": "Workshop retrieved successfully"},
         status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
-    }
+    },
 )
 async def get_workshop(
     workshop_id: str,
