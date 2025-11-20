@@ -114,19 +114,19 @@ class Workshop(Base, table=True):
     "Optional textual description of the workshop in English"
     russian_description: str | None = None
     "Optional textual description of the workshop in Russian"
-    language: WorkshopLanguage | None = Field(...)
+    language: WorkshopLanguage | None = Field(None)
     "Language of the workshop"
     host: str | None = None
     "Host of the workshop (e.g. some club)"
-    dtstart: datetime.datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    dtstart: datetime.datetime | None = Field(None, sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop begins"
-    dtend: datetime.datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    dtend: datetime.datetime | None = Field(None, sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop ends (must be later than dtstart)"
-    check_in_opens: datetime.datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    check_in_opens: datetime.datetime | None = Field(None, sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
     place: str | None = None
     "Optional location where the workshop takes place"
-    capacity: int | None = Field(default=10**6)
+    capacity: int | None = Field(None)
     "Maximum number of attendees allowed for the workshop"
     badges: list[dict[str, str]] = Field(
         default_factory=list,
@@ -177,6 +177,8 @@ class Workshop(Base, table=True):
 
     @model_validator(mode="after")
     def validate_time(self):
+        if self.is_draft:
+            return self  # No need to validate drafts
         if self.dtstart >= self.dtend:
             raise ValueError("`dtstart` must be less than `dtend`")
         if self.check_in_opens is not None and self.check_in_opens >= self.dtstart:
