@@ -53,6 +53,29 @@ class Badge(BaseModel):
         return v
 
 
+class Link(BaseModel):
+    title: str
+    url: str
+
+    @field_validator("title")
+    @classmethod
+    def non_empty_title(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("title cannot be empty")
+        if len(v) > 40:
+            raise ValueError("title too long")
+        return v
+
+    @field_validator("url")
+    @classmethod
+    def non_empty_url(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("url cannot be empty")
+        return v
+
+
 class Base(SQLModel):
     model_config = cast(SQLModelConfig, ConfigDict(json_schema_serialization_defaults_required=True))
 
@@ -114,6 +137,15 @@ class Workshop(Base, table=True):
         ),
     )
     "List of badges associated with this workshop"
+    links: list[dict[str, str]] = Field(
+        default_factory=list,
+        sa_column=Column(
+            JSONB,
+            nullable=False,
+            server_default=sa.text("'[]'::jsonb"),
+        ),
+    )
+    "List of links associated with this workshop"
     is_active: bool = True
     "Marks whether the workshop is currently active (visible for users)"
     is_draft: bool = False
@@ -192,6 +224,8 @@ class CreateWorkshop(Base):
     "Marks whether the workshop is currently in draft phase (visible only for author)"
     badges: list[Badge] = Field(default_factory=list)
     "List of badges associated with this workshop"
+    links: list[Link] = Field(default_factory=list)
+    "List of links associated with this workshop"
 
     @model_validator(mode="before")
     @classmethod
@@ -253,6 +287,8 @@ class UpdateWorkshop(Base):
     "Maximum number of attendees allowed for the workshop"
     badges: list[Badge] | None = None
     "List of badges associated with this workshop"
+    links: list[Link] | None = None
+    "List of links associated with this workshop"
     is_active: bool | None = None
     "Marks whether the workshop is currently active (visible for users)"
     is_draft: bool | None = None
