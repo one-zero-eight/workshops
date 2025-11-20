@@ -139,7 +139,7 @@ class Workshop(Base, table=True):
         _now = datetime.datetime.now(datetime.UTC)
         if _now > self.dtend:
             return False
-        if _now < self.checkin_opens:
+        if _now < self.check_in_opens:
             return False
         return True
 
