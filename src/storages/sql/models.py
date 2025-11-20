@@ -91,19 +91,19 @@ class Workshop(Base, table=True):
     "Optional textual description of the workshop in English"
     russian_description: str | None = None
     "Optional textual description of the workshop in Russian"
-    language: WorkshopLanguage = Field(...)
+    language: WorkshopLanguage | None = Field(...)
     "Language of the workshop"
-    host: str
+    host: str | None = None
     "Host of the workshop (e.g. some club)"
-    dtstart: datetime.datetime = Field(sa_column=Column(DateTime(timezone=True)))
+    dtstart: datetime.datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop begins"
-    dtend: datetime.datetime = Field(sa_column=Column(DateTime(timezone=True)))
+    dtend: datetime.datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop ends (must be later than dtstart)"
-    check_in_opens: datetime.datetime = Field(sa_column=Column(DateTime(timezone=True)))
+    check_in_opens: datetime.datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
     place: str | None = None
     "Optional location where the workshop takes place"
-    capacity: int = Field(default=10**6)
+    capacity: int | None = Field(default=10**6)
     "Maximum number of attendees allowed for the workshop"
     badges: list[dict[str, str]] = Field(
         default_factory=list,
@@ -148,6 +148,19 @@ class Workshop(Base, table=True):
             raise ValueError("`check_in_opens` must be less than `dtstart`")
         return self
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_model(cls, data: dict):
+        if data.get("is_draft"):
+            return data  # No need to validate drafts
+        if data.get("language") is None:
+            raise ValueError("`language` is missing")
+        if data.get("dtstart") is None:
+            raise ValueError("`dtstart` is missing")
+        if data.get("dtend") is None:
+            raise ValueError("`dtend` is missing")
+        return data
+
 
 class CreateWorkshop(Base):
     english_name: str = Field(..., max_length=255)
@@ -158,13 +171,13 @@ class CreateWorkshop(Base):
     "Optional textual description of the workshop in English"
     russian_description: str | None = None
     "Optional textual description of the workshop in Russian"
-    language: WorkshopLanguage
+    language: WorkshopLanguage | None = None
     "Language of the workshop"
-    host: str
+    host: str | None = None
     "Host of the workshop (e.g. some club)"
-    dtstart: datetime.datetime
+    dtstart: datetime.datetime | None = None
     "Date and time when the workshop begins"
-    dtend: datetime.datetime
+    dtend: datetime.datetime | None = None
     "Date and time when the workshop ends (must be later than dtstart)"
     check_in_opens: datetime.datetime | None = None
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
@@ -172,14 +185,16 @@ class CreateWorkshop(Base):
     "Optional location where the workshop takes place"
     capacity: int | None = None
     "Maximum number of attendees allowed for the workshop"
-    is_draft: bool | None = None
+    is_draft: bool = False
     "Marks whether the workshop is currently in draft phase (visible only for author)"
-    badges: list[Badge] = list
+    badges: list[Badge] = Field(default_factory=list)
     "List of badges associated with this workshop"
 
     @model_validator(mode="before")
     @classmethod
     def validate_time(cls, data: dict):
+        if data.get("is_draft"):
+            return data  # No need to validate drafts
         if data.get("dtstart") is None:
             raise ValueError("`dtstart` is missing")
         if data.get("dtend") is None:
@@ -195,6 +210,19 @@ class CreateWorkshop(Base):
         if self.check_in_opens is None and self.dtstart is not None:
             self.check_in_opens = self.dtstart - datetime.timedelta(days=1)
         return self
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_model(cls, data: dict):
+        if data.get("is_draft"):
+            return data  # No need to validate drafts
+        if data.get("language") is None:
+            raise ValueError("`language` is missing")
+        if data.get("dtstart") is None:
+            raise ValueError("`dtstart` is missing")
+        if data.get("dtend") is None:
+            raise ValueError("`dtend` is missing")
+        return data
 
 
 class UpdateWorkshop(Base):
@@ -230,6 +258,8 @@ class UpdateWorkshop(Base):
     @model_validator(mode="before")
     @classmethod
     def validate_time(cls, data: dict):
+        if data.get("is_draft"):
+            return data  # No need to validate drafts
         if data.get("dtstart") is None and data.get("dtend") is None:
             return data
         if data.get("dtstart") is None or data.get("dtend") is None:
