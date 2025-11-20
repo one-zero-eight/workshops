@@ -131,13 +131,16 @@ class Workshop(Base, table=True):
     def is_registrable(self) -> bool:
         """
         Marks whether users can register to the workshop.
-        ~~Can be register only within 1 day before the workshop~~, and cannot be register after the workshop.
+        Can register after check-in opens dt, and cannot register after the workshop.
+        Cannot register to drafts.
         """
+        if self.is_draft:
+            return False
         _now = datetime.datetime.now(datetime.UTC)
         if _now > self.dtend:
             return False
-        # if self.dtstart - _now > datetime.timedelta(days=1):
-        #     return False  # Can check in only 1 day before
+        if _now < self.checkin_opens:
+            return False
         return True
 
     @model_validator(mode="after")
