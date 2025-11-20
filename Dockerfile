@@ -27,6 +27,12 @@ FROM python:3.14-slim-bookworm AS production
 
 ENV PYTHONUNBUFFERED=1
 
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        libmagic1 \
+        libvips-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the applicant from the builder
 COPY --from=builder /app /app
 
