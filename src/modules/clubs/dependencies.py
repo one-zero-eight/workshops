@@ -14,7 +14,7 @@ async def get_user_clubs(
     current_user: CurrentUserDep,
 ) -> list[Club]:
     async with httpx.AsyncClient() as client:
-        response = await client.get(CLUBS_ENDPOINT)
+        response = await client.get(CLUBS_ENDPOINT, follow_redirects=True)
         response.raise_for_status()
         clubs_data = response.json()
 
