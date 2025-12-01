@@ -7,11 +7,11 @@ from starlette.responses import RedirectResponse
 
 import src.modules.workshops.minio as minio
 from src.api.dependencies import (
-    AdminDep,
     CurrentUserDep,
     WorkshopRepositoryDep,
 )
 from src.logging_ import logger
+from src.modules.clubs.dependencies import UserClubsDep
 from src.modules.inh_accounts_sdk import inh_accounts
 from src.modules.users.schemas import ViewUserScheme
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
@@ -33,11 +33,22 @@ router = APIRouter(prefix="/workshops", tags=["Workshops"])
 async def add_workshop(
     workshop_repo: WorkshopRepositoryDep,
     workshop_create: CreateWorkshop,
-    _: AdminDep,
+    user: CurrentUserDep,
+    user_clubs: UserClubsDep,
 ) -> Workshop:
     """
     Add a new workshop
     """
+    if (
+        not any([user_club.title == workshop_create.host for user_club in user_clubs])
+        and not user.role == UserRole.admin
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only admins can add workshops with other clubs as hosts. You can create "
+            f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
+        )
+
     workshop, status = await workshop_repo.create(workshop_create)
     if status != WorkshopEnum.CREATED:
         raise HTTPException(status_code=400, detail=status.value)
@@ -89,15 +100,30 @@ async def get_workshop(
 async def update_workshop(
     workshop_id: str,
     workshop: UpdateWorkshop,
-    _: AdminDep,
     workshop_repo: WorkshopRepositoryDep,
+    user: CurrentUserDep,
+    user_clubs: UserClubsDep,
 ) -> Workshop:
-    updatedWorkshop, status = await workshop_repo.update(workshop_id, workshop)
-    if not updatedWorkshop:
+    update_workshop = await workshop_repo.get(workshop_id)
+    if not update_workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+
+    if (
+        not any([user_club.title == update_workshop.host for user_club in user_clubs])
+        and not user.role == UserRole.admin
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
+            f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
+        )
+
+    updated_workshop, status = await workshop_repo.update(workshop_id, workshop)
+    if not updated_workshop:
         raise HTTPException(status_code=404, detail=status.value)
     if status != WorkshopEnum.UPDATED:
         raise HTTPException(status_code=400, detail=status.value)
-    return updatedWorkshop
+    return updated_workshop
 
 
 @router.delete(
@@ -111,9 +137,24 @@ async def update_workshop(
 )
 async def delete_workshop(
     workshop_id: str,
-    _: AdminDep,
+    user: CurrentUserDep,
+    user_clubs: UserClubsDep,
     workshop_repo: WorkshopRepositoryDep,
 ):
+    delete_workshop = await workshop_repo.get(workshop_id)
+    if not delete_workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+
+    if (
+        not any([user_club.title == update_workshop.host for user_club in user_clubs])
+        and not user.role == UserRole.admin
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only admins can delete workshops with other clubs as hosts. You can delete "
+            f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
+        )
+
     status = await workshop_repo.delete(workshop_id)
     if status != WorkshopEnum.DELETED:
         logger.error(f"Failed during deleting workshop. Status: {status}")
@@ -238,11 +279,19 @@ async def set_event_image(
     workshop_id: str,
     image_file: UploadFile,
     workshop_repo: WorkshopRepositoryDep,
-    _: AdminDep,
+    user: CurrentUserDep,
+    user_clubs: UserClubsDep,
 ) -> Workshop:
     workshop = await workshop_repo.get(workshop_id)
     if not workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
+
+    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.admin:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
+            f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
+        )
 
     bytes_ = await image_file.read()
     content_type = image_file.content_type
