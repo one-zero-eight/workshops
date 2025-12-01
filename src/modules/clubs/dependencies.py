@@ -7,7 +7,7 @@ from src.api.dependencies import CurrentUserDep
 from src.config import settings
 from src.modules.clubs.schemas import Club, ClubType, LinkSchema, LinkType
 
-CLUBS_ENDPOINT = settings.clubs_base_url + "/clubs"
+CLUBS_ENDPOINT = settings.clubs_base_url + "/clubs/"
 
 
 async def get_user_clubs(
