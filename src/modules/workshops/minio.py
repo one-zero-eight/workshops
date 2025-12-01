@@ -31,3 +31,11 @@ def put_event_picture(logo_file_id: str, data: bytes, content_type: str):
         length=len(data),
         content_type=content_type,
     )
+
+
+def delete_event_picture(logo_file_id: str):
+    object_name = get_event_image_object_name(logo_file_id)
+    minio_client.remove_object(
+        bucket_name=settings.minio.bucket,
+        object_name=object_name,
+    )

@@ -155,7 +155,9 @@ class WorkshopRepository:
         result = await self.session.execute(statement)
         return result.scalars().all()
 
-    async def update_image_file_id(self, workshop_id: str, image_file_id: str) -> tuple[Workshop | None, WorkshopEnum]:
+    async def update_image_file_id(
+        self, workshop_id: str, image_file_id: str | None
+    ) -> tuple[Workshop | None, WorkshopEnum]:
         workshop = await self.get(workshop_id)
         if not workshop:
             return None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST

@@ -313,3 +313,32 @@ async def set_event_image(
     minio.put_event_picture(image_file_id, image_bytes, "image/webp")
     await workshop_repo.update_image_file_id(workshop_id, image_file_id)
     return workshop
+
+
+@router.delete(
+    "/{workshop_id}/image",
+    responses={
+        status.HTTP_204_NO_CONTENT: {"description": "Deleted event image successfully"},
+        status.HTTP_403_FORBIDDEN: {"description": "Only admin can change event image"},
+        status.HTTP_404_NOT_FOUND: {"description": "Event not found"},
+    },
+)
+async def delete_event_image(
+    workshop_id: str,
+    workshop_repo: WorkshopRepositoryDep,
+    user: CurrentUserDep,
+    user_clubs: UserClubsDep,
+):
+    workshop = await workshop_repo.get(workshop_id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+
+    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.admin:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
+            f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
+        )
+
+    minio.delete_event_picture(workshop.image_file_id)
+    await workshop_repo.update_image_file_id(workshop_id, None)

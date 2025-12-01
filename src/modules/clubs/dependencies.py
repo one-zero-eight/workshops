@@ -7,14 +7,14 @@ from src.api.dependencies import CurrentUserDep
 from src.config import settings
 from src.modules.clubs.schemas import Club, ClubType, LinkSchema, LinkType
 
-CLUBS_API_URL = settings.clubs_base_url + "clubs/"
+CLUBS_ENDPOINT = settings.clubs_base_url + "clubs/"
 
 
 async def get_user_clubs(
     current_user: CurrentUserDep,
 ) -> list[Club]:
     async with httpx.AsyncClient() as client:
-        response = await client.get(CLUBS_API_URL)
+        response = await client.get(CLUBS_ENDPOINT)
         response.raise_for_status()
         clubs_data = response.json()
 
