@@ -42,6 +42,16 @@ class WorkshopRepository:
 
         logger.info(f"Updating workshop data. Current data: {workshop}")
 
+        current_data = workshop.model_dump()
+        update_data = workshop_update.model_dump(exclude_unset=True)
+
+        transitioning_from_draft = workshop.is_draft and update_data.get("is_draft") is False
+
+        merged_data = {**current_data, **update_data}
+
+        if transitioning_from_draft:
+            Workshop.model_validate(merged_data)
+
         if workshop_update.capacity is not None:
             # Check if new capacity would be less than current registrations
             current_registrations = workshop.capacity - workshop.remain_places
@@ -50,11 +60,10 @@ class WorkshopRepository:
 
             workshop.capacity = workshop_update.capacity
 
-        for key, value in workshop_update.model_dump(exclude_unset=True).items():
+        for key, value in update_data.items():
             if value is not None:
                 setattr(workshop, key, value)
 
-        self.session.add(workshop)
         await self.session.commit()
         await self.session.refresh(workshop)
 
