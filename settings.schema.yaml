@@ -115,7 +115,7 @@ properties:
     $ref: '#/$defs/MinioSettings'
     description: Configuration for S3 object storage
   clubs_base_url:
-    default: https://api.innohassle.ru/clubs/staging-v0/
+    default: https://api.innohassle.ru/clubs/staging-v0
     title: Clubs Base Url
     type: string
 required:

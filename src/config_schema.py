@@ -64,7 +64,7 @@ class Settings(SettingBaseModel):
     "Secret key for accessing API by external services"
     minio: MinioSettings
     "Configuration for S3 object storage"
-    clubs_base_url: str = "https://api.innohassle.ru/clubs/staging-v0/"
+    clubs_base_url: str = "https://api.innohassle.ru/clubs/staging-v0"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":
