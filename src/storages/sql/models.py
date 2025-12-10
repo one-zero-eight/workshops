@@ -29,7 +29,7 @@ class WorkshopLanguage(StrEnum):
 
 
 class CheckInType(StrEnum):
-    no_checkin = "no_check_in"
+    no_check_in = "no_check_in"
     on_innohassle = "on_innohassle"
     by_link = "by_link"
 
