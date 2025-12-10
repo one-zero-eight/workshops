@@ -12,6 +12,8 @@ services:
         condition: service_healthy
       alembic-migrate:
         condition: service_completed_successfully
+      validate-data:
+        condition: service_completed_successfully
     ports:
       - "8005:8000"
     volumes:
@@ -42,6 +44,37 @@ services:
       interval: 1m
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+  validate-data:
+    build: .
+    restart: no
+    depends_on:
+      alembic-migrate:
+        condition: service_completed_successfully
+    volumes:
+      - "./settings.yaml:/app/settings.yaml:ro" # Read-only settings file
+    command: python -m scripts.validate_data
+    environment:
+      PYTHONPATH: /app
+
+  validate-data-cron:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      alembic-migrate:
+        condition: service_completed_successfully
+    volumes:
+      - "./settings.yaml:/app/settings.yaml:ro" # Read-only settings file
+    command: >
+      sh -c 'while true; do
+        echo "[$(date)] Running scheduled validation...";
+        python -m scripts.validate_data || echo "Validation failed";
+        sleep 3600;
+      done'
+    environment:
+      PYTHONPATH: /app
 
   minio:
     # See more: https://hub.docker.com/r/minio/minio
