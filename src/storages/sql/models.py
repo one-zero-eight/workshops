@@ -28,6 +28,12 @@ class WorkshopLanguage(StrEnum):
     both = "both"
 
 
+class CheckInType(StrEnum):
+    no_checkin = "no_check_in"
+    on_innohassle = "on_innohassle"
+    by_link = "by_link"
+
+
 HEX6 = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
@@ -146,6 +152,13 @@ class Workshop(Base, table=True):
         ),
     )
     "List of links associated with this workshop"
+    check_in_type: CheckInType = Field(
+        CheckInType.on_innohassle,
+        sa_column=Column(sa.Enum(CheckInType), nullable=False, server_default=CheckInType.on_innohassle.value),
+    )
+    "Type of check-in (No check-in, on InNoHassle, or by link)"
+    check_in_link: str | None = None
+    "Link for check-in, if check-in type is 'by link'"
     is_active: bool = True
     "Marks whether the workshop is currently active (visible for users)"
     is_draft: bool = False
@@ -198,6 +211,10 @@ class Workshop(Base, table=True):
             raise ValueError("`dtstart` is missing")
         if data.get("dtend") is None:
             raise ValueError("`dtend` is missing")
+        if data.get("check_in_type") == CheckInType.by_link and (
+            data.get("check_in_link") is None or data.get("check_in_link") == ""
+        ):
+            raise ValueError("`check_in_link` is missing")
         return data
 
 
@@ -230,6 +247,10 @@ class CreateWorkshop(Base):
     "List of badges associated with this workshop"
     links: list[Link] = Field(default_factory=list)
     "List of links associated with this workshop"
+    check_in_type: CheckInType = Field(CheckInType.on_innohassle)
+    "Type of check-in (No check-in, on InNoHassle, or by link)"
+    check_in_link: str | None = None
+    "Link for check-in, if check-in type is 'by link'"
 
     @model_validator(mode="before")
     @classmethod
@@ -263,6 +284,10 @@ class CreateWorkshop(Base):
             raise ValueError("`dtstart` is missing")
         if data.get("dtend") is None:
             raise ValueError("`dtend` is missing")
+        if data.get("check_in_type") == CheckInType.by_link and (
+            data.get("check_in_link") is None or data.get("check_in_link") == ""
+        ):
+            raise ValueError("`check_in_link` is missing")
         return data
 
 
@@ -293,6 +318,10 @@ class UpdateWorkshop(Base):
     "List of badges associated with this workshop"
     links: list[Link] | None = None
     "List of links associated with this workshop"
+    check_in_type: CheckInType | None = None
+    "Type of check-in (No check-in, on InNoHassle, or by link)"
+    check_in_link: str | None = None
+    "Link for check-in, if check-in type is 'by link'"
     is_active: bool | None = None
     "Marks whether the workshop is currently active (visible for users)"
     is_draft: bool | None = None
