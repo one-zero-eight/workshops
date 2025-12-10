@@ -42,7 +42,7 @@ async def add_workshop(
     """
     if (
         not any([user_club.title == workshop_create.host for user_club in user_clubs])
-        and not user.role == UserRole.admin
+        and not user.role == UserRole.ADMIN
     ):
         raise HTTPException(
             status_code=403,
@@ -111,7 +111,7 @@ async def update_workshop(
 
     if (
         not any([user_club.title == update_workshop.host for user_club in user_clubs])
-        and not user.role == UserRole.admin
+        and not user.role == UserRole.ADMIN
     ):
         raise HTTPException(
             status_code=403,
@@ -152,7 +152,7 @@ async def delete_workshop(
 
     if (
         not any([user_club.title == update_workshop.host for user_club in user_clubs])
-        and not user.role == UserRole.admin
+        and not user.role == UserRole.ADMIN
     ):
         raise HTTPException(
             status_code=403,
@@ -233,7 +233,7 @@ async def get_all_check_ins(
         raise HTTPException(status_code=404, detail="Workshop not found")
     users = await workshop_repo.get_checked_in_users(workshop_id)
     validated = [ViewUserScheme.model_validate(user) for user in users]
-    if user.role != UserRole.admin:
+    if user.role != UserRole.ADMIN:
         for u in validated:
             u.telegram_username = None  # set to None for non-admins to avoid leaking info
             u.name = None
@@ -291,7 +291,7 @@ async def set_event_image(
     if not workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
 
-    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.admin:
+    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
@@ -338,7 +338,7 @@ async def delete_event_image(
     if not workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
 
-    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.admin:
+    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "

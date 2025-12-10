@@ -94,7 +94,7 @@ async def authenticated_client(async_client: AsyncClient, user: User):
 @pytest.fixture
 async def admin_authenticated_client(async_client: AsyncClient, user: User):
     try:
-        app.dependency_overrides[current_user_dep] = lambda: user.model_copy(update={"role": UserRole.admin})
+        app.dependency_overrides[current_user_dep] = lambda: user.model_copy(update={"role": UserRole.ADMIN})
         yield async_client
     finally:
         app.dependency_overrides.pop(current_user_dep, None)

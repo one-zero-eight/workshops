@@ -19,13 +19,13 @@ async def test_create_user(async_session: AsyncSession, user_data: CreateUserSch
     repo = UsersRepository(async_session)
     user = await repo.create(user_data)
     assert user.innohassle_id == "123"
-    assert user.role == UserRole.user
+    assert user.role == UserRole.USER
     return user
 
 
 async def test_change_role_of_user(async_session: AsyncSession, user_data: CreateUserScheme):
     repo = UsersRepository(async_session)
     user = await repo.create(user_data)
-    with_changed_role = await repo.change_role_of_user(user, UserRole.user)
-    assert with_changed_role.role == UserRole.user
+    with_changed_role = await repo.change_role_of_user(user, UserRole.USER)
+    assert with_changed_role.role == UserRole.USER
     assert with_changed_role.innohassle_id == user.innohassle_id

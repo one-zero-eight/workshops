@@ -18,20 +18,20 @@ def utcnow():
 
 
 class UserRole(StrEnum):
-    admin = "admin"
-    user = "user"
+    ADMIN = "admin"
+    USER = "user"
 
 
 class WorkshopLanguage(StrEnum):
-    english = "english"
-    russian = "russian"
-    both = "both"
+    ENGLISH = "english"
+    RUSSIAN = "russian"
+    BOTH = "both"
 
 
 class CheckInType(StrEnum):
-    no_check_in = "no_check_in"
-    on_innohassle = "on_innohassle"
-    by_link = "by_link"
+    NO_CHECK_IN = "no_check_in"
+    ON_INNOHASSLE = "on_innohassle"
+    BY_LINK = "by_link"
 
 
 HEX6 = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -94,7 +94,7 @@ class User(Base, table=True):
     "Innopolis email (@innopolis.university or @innopolis.ru)"
     telegram_username: str | None
     "Telegram alias of user. If user is not presented in InNoHassle system will be None"
-    role: UserRole = Field(default=UserRole.user)
+    role: UserRole = Field(default=UserRole.USER)
     "Role of user"
     checkins: list["WorkshopCheckin"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
@@ -153,8 +153,8 @@ class Workshop(Base, table=True):
     )
     "List of links associated with this workshop"
     check_in_type: CheckInType = Field(
-        CheckInType.on_innohassle,
-        sa_column=Column(sa.Enum(CheckInType), nullable=False, server_default=CheckInType.on_innohassle.value),
+        CheckInType.ON_INNOHASSLE,
+        sa_column=Column(sa.Enum(CheckInType), nullable=False, server_default=CheckInType.ON_INNOHASSLE.value),
     )
     "Type of check-in (No check-in, on InNoHassle, or by link)"
     check_in_link: str | None = None
@@ -211,7 +211,7 @@ class Workshop(Base, table=True):
             raise ValueError("`dtstart` is missing")
         if data.get("dtend") is None:
             raise ValueError("`dtend` is missing")
-        if data.get("check_in_type") == CheckInType.by_link and (
+        if data.get("check_in_type") == CheckInType.BY_LINK and (
             data.get("check_in_link") is None or data.get("check_in_link") == ""
         ):
             raise ValueError("`check_in_link` is missing")
@@ -247,7 +247,7 @@ class CreateWorkshop(Base):
     "List of badges associated with this workshop"
     links: list[Link] = Field(default_factory=list)
     "List of links associated with this workshop"
-    check_in_type: CheckInType = Field(CheckInType.on_innohassle)
+    check_in_type: CheckInType = Field(CheckInType.ON_INNOHASSLE)
     "Type of check-in (No check-in, on InNoHassle, or by link)"
     check_in_link: str | None = None
     "Link for check-in, if check-in type is 'by link'"
@@ -284,7 +284,7 @@ class CreateWorkshop(Base):
             raise ValueError("`dtstart` is missing")
         if data.get("dtend") is None:
             raise ValueError("`dtend` is missing")
-        if data.get("check_in_type") == CheckInType.by_link and (
+        if data.get("check_in_type") == CheckInType.BY_LINK and (
             data.get("check_in_link") is None or data.get("check_in_link") == ""
         ):
             raise ValueError("`check_in_link` is missing")

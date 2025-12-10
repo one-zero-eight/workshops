@@ -79,7 +79,7 @@ Dependency for getting the current user.
 
 
 async def admin_dep(user: CurrentUserDep):
-    if user.role != UserRole.admin:
+    if user.role != UserRole.ADMIN:
         logger.warning("User does not have admin role.")
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
