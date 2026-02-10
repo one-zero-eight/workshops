@@ -34,6 +34,11 @@ class CheckInType(StrEnum):
     BY_LINK = "by_link"
 
 
+class HostType(StrEnum):
+    CLUB = "club"
+    OTHER = "other"
+
+
 HEX6 = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
@@ -82,6 +87,19 @@ class Link(BaseModel):
         return v
 
 
+class Host(BaseModel):
+    host_type: HostType
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def non_empty_name(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("name cannot be empty")
+        return v
+
+
 class Base(SQLModel):
     model_config = cast(SQLModelConfig, ConfigDict(json_schema_serialization_defaults_required=True))
 
@@ -122,7 +140,14 @@ class Workshop(Base, table=True):
     "Optional textual description of the workshop in Russian"
     language: WorkshopLanguage | None = Field(None)
     "Language of the workshop"
-    host: str | None = None
+    host: list[dict[str, str]] = Field(
+        default_factory=list,
+        sa_column=Column(
+            JSONB,
+            nullable=False,
+            server_default=sa.text("'[]'::jsonb"),
+        ),
+    )
     "Host of the workshop (e.g. some club)"
     dtstart: datetime.datetime | None = Field(None, sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop begins"
@@ -229,7 +254,7 @@ class CreateWorkshop(Base):
     "Optional textual description of the workshop in Russian"
     language: WorkshopLanguage | None = None
     "Language of the workshop"
-    host: str | None = None
+    host: list[Host] | None = None
     "Host of the workshop (e.g. some club)"
     dtstart: datetime.datetime | None = None
     "Date and time when the workshop begins"
@@ -302,7 +327,7 @@ class UpdateWorkshop(Base):
     "Optional textual description of the workshop in Russian"
     language: WorkshopLanguage | None = None
     "Language of the workshop"
-    host: str | None = None
+    host: list[Host] | None = None
     "Host of the workshop (e.g. some club)"
     dtstart: datetime.datetime | None = None
     "Date and time when the workshop begins"
