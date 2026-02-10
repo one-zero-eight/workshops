@@ -37,16 +37,20 @@ This is the API for workshops service in InNoHassle ecosystem. It provides backe
 ### Set up for development
 
 1. Install [uv](https://docs.astral.sh/uv/) and [Docker](https://docs.docker.com/engine/install/)
-2. Install dependencies:
+2. Install libmagic and libvips:
+   ```bash
+   sudo apt install libmagic1 libvips-dev
+   ```
+3. Install dependencies:
    ```bash
    uv sync
    ```
-3. Start development server (and read logs in the terminal):
+4. Start development server (and read logs in the terminal):
    ```bash
    uv run -m src.api --reload
    ```
    > Follow the provided instructions (if needed).
-4. Open in the browser: http://localhost:8005
+5. Open in the browser: http://localhost:8005
    > The api will be reloaded when you edit the code
 
 > [!IMPORTANT]

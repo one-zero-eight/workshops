@@ -16,6 +16,7 @@ from src.modules.clubs.dependencies import UserClubsDep
 from src.modules.inh_accounts_sdk import inh_accounts
 from src.modules.users.schemas import ViewUserScheme
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
+from src.modules.workshops.utils import is_leader_of_club
 from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, UserRole, Workshop
 
 router = APIRouter(prefix="/workshops", tags=["Workshops"])
@@ -40,10 +41,7 @@ async def add_workshop(
     """
     Add a new workshop
     """
-    if (
-        not any([user_club.title == workshop_create.host for user_club in user_clubs])
-        and not user.role == UserRole.ADMIN
-    ):
+    if not is_leader_of_club(user_clubs, workshop_create.host) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can add workshops with other clubs as hosts. You can create "
@@ -109,10 +107,7 @@ async def update_workshop(
     if not update_workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
 
-    if (
-        not any([user_club.title == update_workshop.host for user_club in user_clubs])
-        and not user.role == UserRole.ADMIN
-    ):
+    if not is_leader_of_club(user_clubs, update_workshop.host) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
@@ -150,10 +145,7 @@ async def delete_workshop(
     if not delete_workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
 
-    if (
-        not any([user_club.title == update_workshop.host for user_club in user_clubs])
-        and not user.role == UserRole.ADMIN
-    ):
+    if not is_leader_of_club(user_clubs, delete_workshop.host) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can delete workshops with other clubs as hosts. You can delete "
@@ -291,7 +283,7 @@ async def set_event_image(
     if not workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
 
-    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.ADMIN:
+    if not is_leader_of_club(user_clubs, workshop.host) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
@@ -338,7 +330,7 @@ async def delete_event_image(
     if not workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
 
-    if not any([user_club.title == workshop.host for user_club in user_clubs]) and not user.role == UserRole.ADMIN:
+    if not is_leader_of_club(user_clubs, workshop.host) and not user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can edit workshops with other clubs as hosts. You can edit "
