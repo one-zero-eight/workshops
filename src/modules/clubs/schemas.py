@@ -24,6 +24,8 @@ class LinkSchema(SQLModel):
 
 
 class Club(SQLModel):
+    id: str
+    "MongoDB document ObjectID"
     is_active: bool
     "False if the club is closed"
     slug: str

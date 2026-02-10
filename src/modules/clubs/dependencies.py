@@ -33,6 +33,7 @@ async def get_user_clubs(
         ]
         result.append(
             Club(
+                id=club["id"],
                 is_active=club["is_active"],
                 slug=club["slug"],
                 title=club["title"],
