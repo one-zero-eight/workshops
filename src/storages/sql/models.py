@@ -221,7 +221,7 @@ class Workshop(Base, table=True):
             return self  # No need to validate drafts
         if self.dtstart >= self.dtend:
             raise ValueError("`dtstart` must be less than `dtend`")
-        if self.check_in_opens is not None and self.check_in_opens >= self.dtstart:
+        if self.check_in_opens is not None and self.check_in_opens > self.dtstart:
             raise ValueError("`check_in_opens` must be less than `dtstart`")
         return self
 
@@ -288,7 +288,7 @@ class CreateWorkshop(Base):
             raise ValueError("`dtend` is missing")
         if data["dtstart"] >= data["dtend"]:
             raise ValueError("`dtstart` must be less than `dtend`")
-        if data.get("check_in_opens") is not None and data["check_in_opens"] >= data["dtstart"]:
+        if data.get("check_in_opens") is not None and data["check_in_opens"] > data["dtstart"]:
             raise ValueError("`check_in_opens` must be less than `dtstart`")
         return data
 
@@ -363,7 +363,7 @@ class UpdateWorkshop(Base):
             raise ValueError("`dtstart` and `dtend` must be provided")
         if data["dtstart"] >= data["dtend"]:
             raise ValueError("`dtstart` must be less than `dtend`")
-        if data.get("check_in_opens") is not None and data["check_in_opens"] >= data["dtstart"]:
+        if data.get("check_in_opens") is not None and data["check_in_opens"] > data["dtstart"]:
             raise ValueError("`check_in_opens` must be less than `dtstart`")
         return data
 
