@@ -209,7 +209,7 @@ class Workshop(Base, table=True):
         if self.is_draft:
             return False
         _now = datetime.datetime.now(datetime.UTC)
-        if _now > self.dtend:
+        if _now > self.dtstart:
             return False
         if _now < self.check_in_opens:
             return False
