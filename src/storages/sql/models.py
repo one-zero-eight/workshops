@@ -155,6 +155,8 @@ class Workshop(Base, table=True):
     "Date and time when the workshop ends (must be later than dtstart)"
     check_in_opens: datetime.datetime | None = Field(None, sa_column=Column(DateTime(timezone=True)))
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
+    check_in_closes: datetime.datetime | None = Field(None, sa_column=Column(DateTime(timezone=True)))
+    "Date and time when the workshop check-in ends. Equals dtstart by default"
     place: str | None = None
     "Optional location where the workshop takes place"
     capacity: int | None = Field(None)
@@ -209,9 +211,9 @@ class Workshop(Base, table=True):
         if self.is_draft:
             return False
         _now = datetime.datetime.now(datetime.UTC)
-        if _now > self.dtstart:
-            return False
         if _now < self.check_in_opens:
+            return False
+        if _now > self.check_in_closes:
             return False
         return True
 
@@ -222,7 +224,15 @@ class Workshop(Base, table=True):
         if self.dtstart >= self.dtend:
             raise ValueError("`dtstart` must be less than `dtend`")
         if self.check_in_opens is not None and self.check_in_opens > self.dtstart:
-            raise ValueError("`check_in_opens` must be less than `dtstart`")
+            raise ValueError("`check_in_opens` must be less than or equal to `dtstart`")
+        if self.check_in_closes is not None and self.check_in_closes > self.dtstart:
+            raise ValueError("`check_in_closes` must be less than or equal to `dtstart`")
+        if (
+            self.check_in_opens is not None
+            and self.check_in_closes is not None
+            and self.check_in_opens > self.check_in_closes
+        ):
+            raise ValueError("`check_in_opens` must be less than or equal to `check_in_closes`")
         return self
 
     @model_validator(mode="before")
@@ -262,6 +272,8 @@ class CreateWorkshop(Base):
     "Date and time when the workshop ends (must be later than dtstart)"
     check_in_opens: datetime.datetime | None = None
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
+    check_in_closes: datetime.datetime | None = None
+    "Date and time when the workshop check-in ends. Equals dtstart by default"
     place: str | None = None
     "Optional location where the workshop takes place"
     capacity: int | None = None
@@ -289,13 +301,27 @@ class CreateWorkshop(Base):
         if data["dtstart"] >= data["dtend"]:
             raise ValueError("`dtstart` must be less than `dtend`")
         if data.get("check_in_opens") is not None and data["check_in_opens"] > data["dtstart"]:
-            raise ValueError("`check_in_opens` must be less than `dtstart`")
+            raise ValueError("`check_in_opens` must be less than or equal to `dtstart`")
+        if data.get("check_in_closes") is not None and data["check_in_closes"] > data["dtstart"]:
+            raise ValueError("`check_in_closes` must be less than or equal to `dtstart`")
+        if (
+            data.get("check_in_opens") is not None
+            and data.get("check_in_closes") is not None
+            and data["check_in_opens"] > data["check_in_closes"]
+        ):
+            raise ValueError("`check_in_opens` must be less than or equal to `check_in_closes`")
         return data
 
     @model_validator(mode="after")
     def set_check_in_opens_default(self):
         if self.check_in_opens is None and self.dtstart is not None:
             self.check_in_opens = self.dtstart - datetime.timedelta(days=1)
+        return self
+
+    @model_validator(mode="after")
+    def set_check_in_closes_default(self):
+        if self.check_in_closes is None and self.dtstart is not None:
+            self.check_in_closes = self.dtstart
         return self
 
     @model_validator(mode="before")
@@ -335,6 +361,8 @@ class UpdateWorkshop(Base):
     "Date and time when the workshop ends (must be later than dtstart)"
     check_in_opens: datetime.datetime | None = None
     "Date and time when the workshop check-in starts. dtstart - 1 day by default"
+    check_in_closes: datetime.datetime | None = None
+    "Date and time when the workshop check-in ends. Equals dtstart by default"
     place: str | None = None
     "Optional location where the workshop takes place"
     capacity: int | None = None
@@ -364,7 +392,15 @@ class UpdateWorkshop(Base):
         if data["dtstart"] >= data["dtend"]:
             raise ValueError("`dtstart` must be less than `dtend`")
         if data.get("check_in_opens") is not None and data["check_in_opens"] > data["dtstart"]:
-            raise ValueError("`check_in_opens` must be less than `dtstart`")
+            raise ValueError("`check_in_opens` must be less than or equal to `dtstart`")
+        if data.get("check_in_closes") is not None and data["check_in_closes"] > data["dtstart"]:
+            raise ValueError("`check_in_closes` must be less than or equal to `dtstart`")
+        if (
+            data.get("check_in_opens") is not None
+            and data.get("check_in_closes") is not None
+            and data["check_in_opens"] > data["check_in_closes"]
+        ):
+            raise ValueError("`check_in_opens` must be less than or equal to `check_in_closes`")
         return data
 
 
