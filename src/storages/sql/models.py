@@ -210,6 +210,8 @@ class Workshop(Base, table=True):
         """
         if self.is_draft:
             return False
+        if self.check_in_opens is None or self.check_in_closes is None:
+            return False
         _now = datetime.datetime.now(datetime.UTC)
         if _now < self.check_in_opens:
             return False

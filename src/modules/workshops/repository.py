@@ -45,6 +45,15 @@ class WorkshopRepository:
         current_data = workshop.model_dump()
         update_data = workshop_update.model_dump(exclude_unset=True)
 
+        if "dtstart" in update_data:
+            new_start = update_data["dtstart"]
+
+            if "check_in_opens" not in update_data:
+                update_data["check_in_opens"] = new_start - timedelta(days=1)
+
+            if "check_in_closes" not in update_data:
+                update_data["check_in_closes"] = new_start
+
         merged_data = {**current_data, **update_data}
 
         Workshop.model_validate(merged_data)
