@@ -28,7 +28,7 @@ This is the API for workshops service in InNoHassle ecosystem. It provides backe
 - [Python 3.14](https://www.python.org/downloads/) & [uv](https://docs.astral.sh/uv/)
 - [FastAPI](https://fastapi.tiangolo.com/)
 - Database and ORM: [PostgreSQL](https://www.postgresql.org/), [SQLModel](https://sqlmodel.tiangolo.com/), [SQLAlchemy](https://www.sqlalchemy.org/), [Alembic](https://alembic.sqlalchemy.org/)
-- Formatting and linting: [Ruff](https://docs.astral.sh/ruff/), [pre-commit](https://pre-commit.com/)
+- Formatting and linting: [Ruff](https://docs.astral.sh/ruff/), [prek](https://prek.j178.dev/)
 - Deployment: [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/),
   [GitHub Actions](https://github.com/features/actions)
 
