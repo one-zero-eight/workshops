@@ -1,10 +1,13 @@
 import src.logging_  # noqa
 
 from fastapi import FastAPI
-from fastapi.exception_handlers import http_exception_handler
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.requests import Request
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 from fastapi_swagger import patch_fastapi
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -47,16 +50,24 @@ patch_fastapi(app)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
-    Log validation errors and return human-readable error message.
+    Log validation errors and return the default FastAPI JSON response.
     Based on https://github.com/dantetemplar/fastapi-how-to-log#exceptions
     """
     as_validation_error = ValidationError.from_exception_data(
         str(request.url.path),
         line_errors=exc.errors(),  # type: ignore
     )
-    error_str = str(as_validation_error)
-    logger.warning(error_str, exc_info=False)
-    return PlainTextResponse(error_str, status_code=422)
+    logger.warning(str(as_validation_error), exc_info=False)
+    return await request_validation_exception_handler(request, exc)
+
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    """
+    Log non-request Pydantic validation errors and return JSON details.
+    """
+    logger.warning("Pydantic validation error on %s: %s", request.url.path, exc, exc_info=False)
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -67,6 +78,15 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
     """
     logger.warning(exc, exc_info=exc)
     return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """
+    Log unexpected errors and avoid leaking raw exception text to clients.
+    """
+    logger.exception("Unhandled server error on %s", request.url.path, exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 app.add_middleware(

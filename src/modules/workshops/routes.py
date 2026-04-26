@@ -3,7 +3,6 @@ import asyncio
 import magic
 import pyvips
 from fastapi import APIRouter, HTTPException, UploadFile, status
-from pydantic import ValidationError
 from starlette.responses import RedirectResponse
 
 import src.modules.workshops.minio as minio
@@ -114,10 +113,7 @@ async def update_workshop(
             f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
         )
 
-    try:
-        updated_workshop, status = await workshop_repo.update(workshop_id, workshop)
-    except ValidationError as e:
-        raise HTTPException(status_code=422, detail=e.json())
+    updated_workshop, status = await workshop_repo.update(workshop_id, workshop)
 
     if not updated_workshop:
         raise HTTPException(status_code=404, detail=status.value)
