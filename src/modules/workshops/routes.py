@@ -232,8 +232,8 @@ async def get_all_check_ins(
         for u, user_info in zip(validated, user_infos):
             if isinstance(user_info, BaseException):
                 continue
-            if user_info and user_info.innopolis_sso:
-                u.name = user_info.innopolis_sso.name
+            if user_info and user_info.innopolis_info:
+                u.name = user_info.innopolis_info.name
     return validated
 
 

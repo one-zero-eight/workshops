@@ -51,12 +51,12 @@ async def current_user_dep(
     inh_user = await inh_accounts.get_user(innohassle_id=token_data.innohassle_id)
     assert inh_user is not None, "User not found, but token is valid. It shouldn't happen."
 
-    if inh_user.innopolis_sso is None:
+    if inh_user.innopolis_info is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Connected email is required",
         )
-    if inh_user.telegram is None:
+    if inh_user.telegram_info is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Connected telegram is required",
@@ -65,8 +65,8 @@ async def current_user_dep(
     user = await user_repository.fetch_or_create(
         CreateUserScheme(
             innohassle_id=token_data.innohassle_id,
-            email=inh_user.innopolis_sso.email,
-            telegram_username=inh_user.telegram.username,
+            email=inh_user.innopolis_info.email,
+            telegram_username=inh_user.telegram_info.username,
         )
     )
     return user
