@@ -3,6 +3,7 @@ import asyncio
 import magic
 import pyvips
 from fastapi import APIRouter, HTTPException, UploadFile, status
+from starlette.concurrency import run_in_threadpool
 from starlette.responses import RedirectResponse
 
 import src.modules.workshops.minio as minio
@@ -19,6 +20,11 @@ from src.modules.workshops.utils import is_leader_of_club
 from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, UserRole, Workshop
 
 router = APIRouter(prefix="/workshops", tags=["Workshops"])
+
+
+def convert_image_to_webp(bytes_: bytes) -> bytes:
+    image: pyvips.Image = pyvips.Image.new_from_buffer(bytes_, "")
+    return image.write_to_buffer(".webp")
 
 
 @router.post(
@@ -256,7 +262,8 @@ async def get_event_image(
     if not workshop.image_file_id:
         raise HTTPException(status_code=404, detail="No image available")
 
-    return RedirectResponse(url=minio.get_event_picture_url(workshop.image_file_id))
+    url = await run_in_threadpool(minio.get_event_picture_url, workshop.image_file_id)
+    return RedirectResponse(url=url)
 
 
 @router.post(
@@ -297,13 +304,11 @@ async def set_event_image(
             status_code=400, detail=f"Invalid content type ({content_type}), must be one of {supported_content_types}"
         )
 
-    # Convert to webp
-    image: pyvips.Image = pyvips.Image.new_from_buffer(bytes_, "")
-    image_bytes = image.write_to_buffer(".webp")
+    image_bytes = await run_in_threadpool(convert_image_to_webp, bytes_)
 
     # Save file
     image_file_id = workshop_id
-    minio.put_event_picture(image_file_id, image_bytes, "image/webp")
+    await run_in_threadpool(minio.put_event_picture, image_file_id, image_bytes, "image/webp")
     await workshop_repo.update_image_file_id(workshop_id, image_file_id)
     return workshop
 
@@ -333,5 +338,8 @@ async def delete_event_image(
             f"workshops with following clubs as host: {[user_club.title for user_club in user_clubs]}",
         )
 
-    minio.delete_event_picture(workshop.image_file_id)
+    if not workshop.image_file_id:
+        raise HTTPException(status_code=404, detail="No image available")
+
+    await run_in_threadpool(minio.delete_event_picture, workshop.image_file_id)
     await workshop_repo.update_image_file_id(workshop_id, None)

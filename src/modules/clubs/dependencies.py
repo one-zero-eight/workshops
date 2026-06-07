@@ -8,12 +8,13 @@ from src.config import settings
 from src.modules.clubs.schemas import Club, ClubType, LinkSchema, LinkType
 
 CLUBS_ENDPOINT = settings.clubs_base_url + "/clubs/"
+HTTP_TIMEOUT = httpx.Timeout(10.0, connect=3.0)
 
 
 async def get_user_clubs(
     current_user: CurrentUserDep,
 ) -> list[Club]:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
         response = await client.get(CLUBS_ENDPOINT, follow_redirects=True)
         response.raise_for_status()
         clubs_data = response.json()

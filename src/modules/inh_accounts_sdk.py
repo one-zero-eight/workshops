@@ -14,6 +14,8 @@ from pydantic import BaseModel
 
 from src.config import settings
 
+HTTP_TIMEOUT = httpx.Timeout(10.0, connect=3.0)
+
 
 class TelegramInfo(BaseModel):
     id: int
@@ -79,7 +81,7 @@ class InNoHassleAccounts:
         return RSAKey.import_key(key_data)
 
     async def get_key_set(self) -> dict[str, Any]:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
             response = await client.get(f"{self.api_url}/.well-known/jwks.json")
             response.raise_for_status()
             return response.json()
@@ -111,6 +113,7 @@ class InNoHassleAccounts:
         return httpx.AsyncClient(
             headers={"Authorization": f"Bearer {self.api_jwt_token}"},
             base_url=self.api_url,
+            timeout=HTTP_TIMEOUT,
         )
 
     def _get_jwt_claims(self, token: str) -> dict[str, Any]:
