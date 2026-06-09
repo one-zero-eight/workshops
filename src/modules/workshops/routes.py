@@ -309,8 +309,8 @@ async def set_event_image(
     # Save file
     image_file_id = workshop_id
     await run_in_threadpool(minio.put_event_picture, image_file_id, image_bytes, "image/webp")
-    await workshop_repo.update_image_file_id(workshop_id, image_file_id)
-    return workshop
+    updated_workshop, _ = await workshop_repo.update_image_file_id(workshop_id, image_file_id)
+    return updated_workshop or workshop
 
 
 @router.delete(

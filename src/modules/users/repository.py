@@ -1,3 +1,4 @@
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -8,6 +9,17 @@ from src.storages.sql.models import User, UserRole
 class UsersRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def _detach_and_close_transaction(self, *objects: object | None) -> None:
+        for obj in objects:
+            if obj is None:
+                continue
+            try:
+                self.session.expunge(obj)
+            except InvalidRequestError:
+                pass
+        if self.session.in_transaction():
+            await self.session.rollback()
 
     async def fetch_or_create(self, user_create: CreateUserScheme) -> User:
         user = await self.read_by_innohassle_id(user_create.innohassle_id)
@@ -21,6 +33,7 @@ class UsersRepository:
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
+        await self._detach_and_close_transaction(user)
         return user
 
     async def delete(self, user: User):
@@ -30,16 +43,21 @@ class UsersRepository:
     async def read_by_innohassle_id(self, innohassle_id: str) -> User | None:
         query = select(User).where(User.innohassle_id == innohassle_id)
         result = await self.session.execute(query)
-        return result.scalars().first()
+        user = result.scalars().first()
+        await self._detach_and_close_transaction(user)
+        return user
 
     async def read_by_email(self, email: str) -> User | None:
         query = select(User).where(User.email == email)
         result = await self.session.execute(query)
-        return result.scalars().first()
+        user = result.scalars().first()
+        await self._detach_and_close_transaction(user)
+        return user
 
     async def change_role_of_user(self, user: User, role: UserRole) -> User:
         user.role = role
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
+        await self._detach_and_close_transaction(user)
         return user

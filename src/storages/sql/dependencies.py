@@ -22,7 +22,11 @@ Session = async_sessionmaker(
 async def get_session():
     # ensures that db is opened and closed per request
     async with Session() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            if session.in_transaction():
+                await session.rollback()
 
 
 DbSessionDep = Annotated[AsyncSession, Depends(get_session)]
