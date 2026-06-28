@@ -1,7 +1,6 @@
 import asyncio
 
 import magic
-import pyvips
 from fastapi import APIRouter, HTTPException, UploadFile, status
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import RedirectResponse
@@ -11,6 +10,7 @@ from src.api.dependencies import (
     CurrentUserDep,
     WorkshopRepositoryDep,
 )
+from src.config import settings
 from src.logging_ import logger
 from src.modules.clubs.dependencies import UserClubsDep
 from src.modules.inh_accounts_sdk import inh_accounts
@@ -23,6 +23,8 @@ router = APIRouter(prefix="/workshops", tags=["Workshops"])
 
 
 def convert_image_to_webp(bytes_: bytes) -> bytes:
+    import pyvips
+
     image: pyvips.Image = pyvips.Image.new_from_buffer(bytes_, "")
     return image.write_to_buffer(".webp")
 
@@ -46,7 +48,11 @@ async def add_workshop(
     """
     Add a new workshop
     """
-    if not is_leader_of_club(user_clubs, workshop_create.host) and not user.role == UserRole.ADMIN:
+    if (
+        not is_leader_of_club(user_clubs, workshop_create.host)
+        and not user.role == UserRole.ADMIN
+        and user.email not in settings.superadmin_emails
+    ):
         raise HTTPException(
             status_code=403,
             detail=f"Only admins can add workshops with other clubs as hosts. You can create "
@@ -126,6 +132,29 @@ async def update_workshop(
     if status != WorkshopEnum.UPDATED:
         raise HTTPException(status_code=400, detail=status.value)
     return updated_workshop
+
+
+@router.post(
+    "/{workshop_id}/approve",
+    responses={
+        status.HTTP_200_OK: {"description": "Workshop approved successfully"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Not authenticated"},
+        status.HTTP_403_FORBIDDEN: {"description": "Only superadmin can approve workshops"},
+        status.HTTP_404_NOT_FOUND: {"description": "Workshop not found"},
+    },
+)
+async def approve_workshop(
+    workshop_id: str,
+    workshop_repo: WorkshopRepositoryDep,
+    user: CurrentUserDep,
+) -> Workshop:
+    if user.email not in settings.superadmin_emails:
+        raise HTTPException(status_code=403, detail="Only superadmin can validate workshops")
+
+    workshop, validation_status = await workshop_repo.approve(workshop_id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail=validation_status.value)
+    return workshop
 
 
 @router.delete(

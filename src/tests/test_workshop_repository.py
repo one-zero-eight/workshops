@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.workshops.enums import CheckInEnum, WorkshopEnum
 from src.modules.workshops.repository import WorkshopRepository
-from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, Workshop
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, Workshop, WorkshopLanguage
 
 
 async def test_create_workshop(
@@ -13,15 +13,35 @@ async def test_create_workshop(
     assert status == WorkshopEnum.CREATED
     assert workshop is not None
     assert workshop.id is not None
-    assert workshop.name == workshop_data_to_create.name
+    assert workshop.english_name == workshop_data_to_create.english_name
+    assert not workshop.is_approved
 
 
 async def test_get_all_workshops(
     workshop_repository: WorkshopRepository,
     already_created_workshop: Workshop,
 ):
+    await workshop_repository.approve(already_created_workshop.id)
     workshops = await workshop_repository.get_all()
-    assert already_created_workshop in workshops
+    assert any(workshop.id == already_created_workshop.id for workshop in workshops)
+
+
+async def test_get_all_workshops_filters_unapproved(
+    workshop_repository: WorkshopRepository,
+    already_created_workshop: Workshop,
+):
+    workshops = await workshop_repository.get_all()
+    assert all(workshop.id != already_created_workshop.id for workshop in workshops)
+
+
+async def test_get_all_workshops_filters_inactive(
+    workshop_repository: WorkshopRepository,
+    already_created_workshop: Workshop,
+):
+    await workshop_repository.approve(already_created_workshop.id)
+    await workshop_repository.set_active(already_created_workshop.id, False)
+    workshops = await workshop_repository.get_all()
+    assert all(workshop.id != already_created_workshop.id for workshop in workshops)
 
 
 async def test_get_workshop_by_id(
@@ -40,8 +60,35 @@ async def test_update_workshop(
     workshop_updated, status = await workshop_repository.update(already_created_workshop.id, workshop_data_to_update)
     assert status == WorkshopEnum.UPDATED
     assert workshop_updated is not None
-    assert workshop_updated.name == workshop_data_to_update.name
+    assert workshop_updated.english_name == workshop_data_to_update.english_name
     assert workshop_updated.id == already_created_workshop.id
+    assert not workshop_updated.is_approved
+
+
+async def test_approve_workshop(
+    workshop_repository: WorkshopRepository,
+    already_created_workshop: Workshop,
+):
+    workshop_approved, status = await workshop_repository.approve(already_created_workshop.id)
+    assert status == WorkshopEnum.UPDATED
+    assert workshop_approved is not None
+    assert workshop_approved.is_approved
+
+
+async def test_update_resets_approval(
+    workshop_repository: WorkshopRepository,
+    already_created_workshop: Workshop,
+    workshop_data_to_update: UpdateWorkshop,
+):
+    workshop_approved, status = await workshop_repository.approve(already_created_workshop.id)
+    assert status == WorkshopEnum.UPDATED
+    assert workshop_approved is not None
+    assert workshop_approved.is_approved
+
+    workshop_updated, status = await workshop_repository.update(already_created_workshop.id, workshop_data_to_update)
+    assert status == WorkshopEnum.UPDATED
+    assert workshop_updated is not None
+    assert not workshop_updated.is_approved
 
 
 async def test_change_active_status_workshop(
@@ -157,8 +204,11 @@ async def test_check_in_overlapping_workshops(
 
     second_workshop, status = await workshop_repository.create(
         CreateWorkshop(
-            name="Name",
-            description="Description",
+            english_name="Name",
+            russian_name="Russian name",
+            english_description="Description",
+            russian_description="Russian description",
+            language=WorkshopLanguage.ENGLISH,
             dtstart=already_created_workshop.dtstart,
             dtend=already_created_workshop.dtend,
             place="Place",

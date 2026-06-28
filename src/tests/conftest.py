@@ -11,10 +11,11 @@ from sqlmodel import SQLModel
 from src.api.app import app
 from src.api.dependencies import current_user_dep
 from src.config import settings
+from src.modules.clubs.dependencies import get_user_clubs
 from src.modules.users.repository import UsersRepository
 from src.modules.users.schemas import CreateUserScheme
 from src.modules.workshops.repository import WorkshopRepository
-from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, UserRole
+from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, UserRole, WorkshopLanguage
 
 # --- Set the database URL for testing (isolate it if needed) ---
 TEST_DATABASE_URL = settings.db_url.get_secret_value()
@@ -72,6 +73,7 @@ async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClien
         yield async_session
 
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_user_clubs] = lambda: []
 
     # Use httpx.AsyncClient with ASGITransport
     transport = ASGITransport(app=app)
@@ -79,6 +81,7 @@ async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClien
         yield client
 
     app.dependency_overrides.pop(get_session, None)
+    app.dependency_overrides.pop(get_user_clubs, None)
 
 
 # --- Fixtures for authentication ---
@@ -98,6 +101,21 @@ async def admin_authenticated_client(async_client: AsyncClient, user: User):
         yield async_client
     finally:
         app.dependency_overrides.pop(current_user_dep, None)
+
+
+@pytest.fixture
+async def superadmin_authenticated_client(async_client: AsyncClient, user: User):
+    superadmin_email = "superadmin@test.com"
+    original_superadmin_emails = settings.superadmin_emails
+    settings.superadmin_emails = [*settings.superadmin_emails, superadmin_email]
+    try:
+        app.dependency_overrides[current_user_dep] = lambda: user.model_copy(
+            update={"email": superadmin_email, "role": UserRole.ADMIN}
+        )
+        yield async_client
+    finally:
+        app.dependency_overrides.pop(current_user_dep, None)
+        settings.superadmin_emails = original_superadmin_emails
 
 
 @pytest.fixture
@@ -128,8 +146,11 @@ async def user(user_repository: UsersRepository):
 @pytest.fixture
 async def workshop_data_to_create():
     return CreateWorkshop(
-        name="name",
-        description="description",
+        english_name="name",
+        russian_name="russian name",
+        english_description="description",
+        russian_description="russian description",
+        language=WorkshopLanguage.ENGLISH,
         place="place",
         dtstart=datetime.now(UTC) + timedelta(minutes=1),
         dtend=datetime.now(UTC) + timedelta(days=1),
@@ -140,8 +161,10 @@ async def workshop_data_to_create():
 @pytest.fixture
 async def workshop_data_to_update():
     return UpdateWorkshop(
-        name="name_updated",
-        description="description_updated",
+        english_name="name_updated",
+        russian_name="russian name updated",
+        english_description="description_updated",
+        russian_description="russian description updated",
         place="place_updated",
         dtstart=datetime.now(UTC) + timedelta(minutes=1),
         dtend=datetime.now(UTC) + timedelta(days=1),

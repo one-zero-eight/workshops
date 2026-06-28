@@ -28,7 +28,7 @@ class WorkshopRepository:
     async def create(self, workshop: CreateWorkshop) -> tuple[Workshop | None, WorkshopEnum]:
         if not workshop.capacity:
             workshop.capacity = 10**6
-        db_workshop = Workshop.model_validate(workshop.model_dump(exclude_unset=True))
+        db_workshop = Workshop.model_validate({**workshop.model_dump(exclude_unset=True), "is_approved": False})
 
         self.session.add(db_workshop)
         await self.session.commit()
@@ -38,7 +38,11 @@ class WorkshopRepository:
         return db_workshop, WorkshopEnum.CREATED
 
     async def get_all(self, limit: int = 100, close_transaction: bool = True) -> Sequence[Workshop]:
-        query = select(Workshop)
+        query = select(Workshop).where(
+            Workshop.is_active.is_(True),
+            Workshop.is_draft.is_(False),
+            Workshop.is_approved.is_(True),
+        )
         result = await self.session.execute(query.limit(limit=limit))
         workshops = list(result.scalars().all())
         if close_transaction:
@@ -73,6 +77,7 @@ class WorkshopRepository:
             if "check_in_closes" not in update_data:
                 update_data["check_in_closes"] = new_start
 
+        update_data["is_approved"] = False
         merged_data = {**current_data, **update_data}
 
         Workshop.model_validate(merged_data)
@@ -95,6 +100,21 @@ class WorkshopRepository:
         await self._detach_and_close_transaction(workshop)
 
         logger.info(f"Updated workshop data. New data: {workshop}")
+
+        return workshop, WorkshopEnum.UPDATED
+
+    async def approve(self, workshop_id: str) -> tuple[Workshop | None, WorkshopEnum]:
+        workshop = await self.get(workshop_id, close_transaction=False)
+        if not workshop:
+            await self._detach_and_close_transaction()
+            return None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST
+
+        workshop.is_approved = True
+
+        self.session.add(workshop)
+        await self.session.commit()
+        await self.session.refresh(workshop)
+        await self._detach_and_close_transaction(workshop)
 
         return workshop, WorkshopEnum.UPDATED
 
@@ -220,6 +240,7 @@ class WorkshopRepository:
             return None, WorkshopEnum.WORKSHOP_DOES_NOT_EXIST
 
         workshop.image_file_id = image_file_id
+        workshop.is_approved = False
         await self.session.commit()
         await self.session.refresh(workshop)
         await self._detach_and_close_transaction(workshop)

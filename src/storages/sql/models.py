@@ -190,6 +190,11 @@ class Workshop(Base, table=True):
     "Marks whether the workshop is currently active (visible for users)"
     is_draft: bool = False
     "Marks whether the workshop is currently in draft phase (visible only for author)"
+    is_approved: bool = Field(
+        False,
+        sa_column=Column(sa.Boolean(), nullable=False, server_default=sa.text("false")),
+    )
+    "Marks whether the workshop has been approved by a superadmin"
     image_file_id: str | None = None
     "File ID of the event image"
     checkins: list["WorkshopCheckin"] = Relationship(back_populates="workshop", cascade_delete=True)
