@@ -1,4 +1,11 @@
-__all__ = ["CurrentUserDep", "current_user_dep", "AdminDep", "WorkshopRepositoryDep"]
+__all__ = [
+    "CurrentUserDep",
+    "current_user_dep",
+    "OptionalCurrentUserDep",
+    "optional_current_user_dep",
+    "AdminDep",
+    "EventRepositoryDep",
+]
 
 from typing import Annotated
 
@@ -8,10 +15,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.api.exceptions import IncorrectCredentialsException
 from src.config import settings
 from src.logging_ import logger
+from src.modules.events.repository import EventRepository
 from src.modules.inh_accounts_sdk import inh_accounts
 from src.modules.users.repository import UsersRepository
 from src.modules.users.schemas import CreateUserScheme
-from src.modules.workshops.repository import WorkshopRepository
 from src.storages.sql.dependencies import DbSessionDep
 from src.storages.sql.models import User, UserRole
 
@@ -78,6 +85,39 @@ Dependency for getting the current user.
 """
 
 
+async def optional_current_user_dep(
+    user_repository: UsersRepositoryDep,
+    bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> User | None:
+    token = bearer and bearer.credentials
+    if not token:
+        return None
+    token_data = inh_accounts.decode_token(token)
+    if token_data is None:
+        return None
+    inh_user = await inh_accounts.get_user(innohassle_id=token_data.innohassle_id)
+    if not inh_user:
+        return None
+
+    if inh_user.innopolis_info is None or inh_user.telegram_info is None:
+        return None
+
+    user = await user_repository.fetch_or_create(
+        CreateUserScheme(
+            innohassle_id=token_data.innohassle_id,
+            email=inh_user.innopolis_info.email,
+            telegram_username=inh_user.telegram_info.username,
+        )
+    )
+    return user
+
+
+OptionalCurrentUserDep = Annotated[User | None, Depends(optional_current_user_dep)]
+"""
+Dependency for getting the current user, or None if unauthenticated/invalid token.
+"""
+
+
 async def admin_dep(user: CurrentUserDep):
     if user.role != UserRole.ADMIN:
         logger.warning("User does not have admin role.")
@@ -91,11 +131,11 @@ Dependency for checking if the current user is an admin.
 """
 
 
-async def get_workshop_repository(db_session: DbSessionDep) -> WorkshopRepository:
-    return WorkshopRepository(db_session)
+async def get_event_repository(db_session: DbSessionDep) -> EventRepository:
+    return EventRepository(db_session)
 
 
-WorkshopRepositoryDep = Annotated[WorkshopRepository, Depends(get_workshop_repository)]
+EventRepositoryDep = Annotated[EventRepository, Depends(get_event_repository)]
 
 
 def api_key_dep(

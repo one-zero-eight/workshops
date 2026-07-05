@@ -22,7 +22,14 @@ class UserRole(StrEnum):
     USER = "user"
 
 
-class WorkshopLanguage(StrEnum):
+class EventStatus(StrEnum):
+    DRAFT = "draft"
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class EventLanguage(StrEnum):
     ENGLISH = "english"
     RUSSIAN = "russian"
     BOTH = "both"
@@ -114,10 +121,10 @@ class User(Base, table=True):
     "Telegram alias of user. If user is not presented in InNoHassle system will be None"
     role: UserRole = Field(default=UserRole.USER)
     "Role of user"
-    checkins: list["WorkshopCheckin"] = Relationship(
+    registrations: list["EventRegistration"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
-    "All checkins for specific user"
+    "All registrations for specific user"
 
     @property
     def id(self) -> str:
@@ -125,21 +132,21 @@ class User(Base, table=True):
         return self.innohassle_id
 
 
-class Workshop(Base, table=True):
-    __tablename__ = "workshops"  # type: ignore
+class Event(Base, table=True):
+    __tablename__ = "events"  # type: ignore
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
     "Unique identifier generated with UUID standard"
     english_name: str = Field(index=True, max_length=255)
-    "Human-readable name of the workshop in English, indexed for search"
+    "Human-readable name of the event in English, indexed for search"
     russian_name: str = Field(index=True, max_length=255)
-    "Human-readable name of the workshop in Russian, also indexed for search"
+    "Human-readable name of the event in Russian, also indexed for search"
     english_description: str | None = None
-    "Optional textual description of the workshop in English"
+    "Optional textual description of the event in English"
     russian_description: str | None = None
-    "Optional textual description of the workshop in Russian"
-    language: WorkshopLanguage | None = Field(None)
-    "Language of the workshop"
+    "Optional textual description of the event in Russian"
+    language: EventLanguage | None = Field(None)
+    "Language of the event"
     host: list[dict[str, str]] = Field(
         default_factory=list,
         sa_column=Column(
@@ -169,7 +176,7 @@ class Workshop(Base, table=True):
             server_default=sa.text("'[]'::jsonb"),
         ),
     )
-    "List of badges associated with this workshop"
+    "List of badges associated with this event"
     links: list[dict[str, str]] = Field(
         default_factory=list,
         sa_column=Column(
@@ -178,7 +185,7 @@ class Workshop(Base, table=True):
             server_default=sa.text("'[]'::jsonb"),
         ),
     )
-    "List of links associated with this workshop"
+    "List of links associated with this event"
     check_in_type: CheckInType = Field(
         CheckInType.ON_INNOHASSLE,
         sa_column=Column(sa.Enum(CheckInType), nullable=False, server_default=CheckInType.ON_INNOHASSLE.value),
@@ -186,34 +193,32 @@ class Workshop(Base, table=True):
     "Type of check-in (No check-in, on InNoHassle, or by link)"
     check_in_link: str | None = None
     "Link for check-in, if check-in type is 'by link'"
-    is_active: bool = True
-    "Marks whether the workshop is currently active (visible for users)"
-    is_draft: bool = False
-    "Marks whether the workshop is currently in draft phase (visible only for author)"
-    is_approved: bool = Field(
-        False,
-        sa_column=Column(sa.Boolean(), nullable=False, server_default=sa.text("false")),
+    status: EventStatus = Field(
+        EventStatus.DRAFT,
+        sa_column=Column(sa.Enum(EventStatus), nullable=False, server_default=EventStatus.DRAFT.value),
     )
-    "Marks whether the workshop has been approved by a superadmin"
+    "Status of the event in its lifecycle"
+    created_by: str | None = Field(default=None, foreign_key="users.innohassle_id")
+    "User who created the event"
     image_file_id: str | None = None
     "File ID of the event image"
-    checkins: list["WorkshopCheckin"] = Relationship(back_populates="workshop", cascade_delete=True)
-    "List of check-in records associated with this workshop"
+    registrations: list["EventRegistration"] = Relationship(back_populates="event", cascade_delete=True)
+    "List of registration records associated with this event"
     created_at: datetime.datetime = Field(default_factory=utcnow, sa_column=Column(DateTime(timezone=True)))
-    "Timestamp of when the workshop was created"
+    "Timestamp of when the event was created"
 
     @computed_field
     def remain_places(self) -> int:
-        return self.capacity - self._checkins_count
+        return self.capacity - self._registrations_count
 
     @computed_field
     def is_registrable(self) -> bool:
         """
-        Marks whether users can register to the workshop.
-        Can register after check-in opens dt, and cannot register after the workshop.
-        Cannot register to drafts.
+        Marks whether users can register to the event.
+        Can register after check-in opens dt, and cannot register after the event.
+        Cannot register if the event is not approved.
         """
-        if self.is_draft:
+        if self.status != EventStatus.APPROVED:
             return False
         if self.check_in_opens is None or self.check_in_closes is None:
             return False
@@ -226,7 +231,7 @@ class Workshop(Base, table=True):
 
     @model_validator(mode="after")
     def validate_time(self):
-        if self.is_draft:
+        if self.status in [EventStatus.DRAFT, EventStatus.REJECTED]:
             return self  # No need to validate drafts
         if self.dtstart >= self.dtend:
             raise ValueError("`dtstart` must be less than `dtend`")
@@ -245,7 +250,7 @@ class Workshop(Base, table=True):
     @model_validator(mode="before")
     @classmethod
     def validate_model(cls, data: dict):
-        if data.get("is_draft"):
+        if data.get("status") in [EventStatus.DRAFT, EventStatus.REJECTED, "draft", "rejected"]:
             return data  # No need to validate drafts
         if data.get("language") is None:
             raise ValueError("`language` is missing")
@@ -260,37 +265,35 @@ class Workshop(Base, table=True):
         return data
 
 
-class CreateWorkshop(Base):
+class CreateEvent(Base):
     english_name: str = Field(..., max_length=255)
-    "Human-readable name of the workshop in English, indexed for search"
+    "Human-readable name of the event in English, indexed for search"
     russian_name: str = Field(..., max_length=255)
-    "Human-readable name of the workshop in Russian, also indexed for search"
+    "Human-readable name of the event in Russian, also indexed for search"
     english_description: str | None = None
-    "Optional textual description of the workshop in English"
+    "Optional textual description of the event in English"
     russian_description: str | None = None
-    "Optional textual description of the workshop in Russian"
-    language: WorkshopLanguage | None = None
-    "Language of the workshop"
+    "Optional textual description of the event in Russian"
+    language: EventLanguage | None = None
+    "Language of the event"
     host: list[Host] | None = None
-    "Host of the workshop (e.g. some club)"
+    "Host of the event (e.g. some club)"
     dtstart: datetime.datetime | None = None
-    "Date and time when the workshop begins"
+    "Date and time when the event begins"
     dtend: datetime.datetime | None = None
-    "Date and time when the workshop ends (must be later than dtstart)"
+    "Date and time when the event ends (must be later than dtstart)"
     check_in_opens: datetime.datetime | None = None
-    "Date and time when the workshop check-in starts. dtstart - 1 day by default"
+    "Date and time when the event check-in starts. dtstart - 1 day by default"
     check_in_closes: datetime.datetime | None = None
-    "Date and time when the workshop check-in ends. Equals dtstart by default"
+    "Date and time when the event check-in ends. Equals dtstart by default"
     place: str | None = None
-    "Optional location where the workshop takes place"
+    "Optional location where the event takes place"
     capacity: int | None = None
-    "Maximum number of attendees allowed for the workshop"
-    is_draft: bool = False
-    "Marks whether the workshop is currently in draft phase (visible only for author)"
+    "Maximum number of attendees allowed for the event"
     badges: list[Badge] = Field(default_factory=list)
-    "List of badges associated with this workshop"
+    "List of badges associated with this event"
     links: list[Link] = Field(default_factory=list)
-    "List of links associated with this workshop"
+    "List of links associated with this event"
     check_in_type: CheckInType = Field(CheckInType.ON_INNOHASSLE)
     "Type of check-in (No check-in, on InNoHassle, or by link)"
     check_in_link: str | None = None
@@ -299,24 +302,7 @@ class CreateWorkshop(Base):
     @model_validator(mode="before")
     @classmethod
     def validate_time(cls, data: dict):
-        if data.get("is_draft"):
-            return data  # No need to validate drafts
-        if data.get("dtstart") is None:
-            raise ValueError("`dtstart` is missing")
-        if data.get("dtend") is None:
-            raise ValueError("`dtend` is missing")
-        if data["dtstart"] >= data["dtend"]:
-            raise ValueError("`dtstart` must be less than `dtend`")
-        if data.get("check_in_opens") is not None and data["check_in_opens"] > data["dtstart"]:
-            raise ValueError("`check_in_opens` must be less than or equal to `dtstart`")
-        if data.get("check_in_closes") is not None and data["check_in_closes"] > data["dtstart"]:
-            raise ValueError("`check_in_closes` must be less than or equal to `dtstart`")
-        if (
-            data.get("check_in_opens") is not None
-            and data.get("check_in_closes") is not None
-            and data["check_in_opens"] > data["check_in_closes"]
-        ):
-            raise ValueError("`check_in_opens` must be less than or equal to `check_in_closes`")
+        # CreateEvent always creates a draft initially, so we don't strictly validate time here.
         return data
 
     @model_validator(mode="after")
@@ -334,64 +320,48 @@ class CreateWorkshop(Base):
     @model_validator(mode="before")
     @classmethod
     def validate_model(cls, data: dict):
-        if data.get("is_draft"):
-            return data  # No need to validate drafts
-        if data.get("language") is None:
-            raise ValueError("`language` is missing")
-        if data.get("dtstart") is None:
-            raise ValueError("`dtstart` is missing")
-        if data.get("dtend") is None:
-            raise ValueError("`dtend` is missing")
-        if data.get("check_in_type") == CheckInType.BY_LINK and (
-            data.get("check_in_link") is None or data.get("check_in_link") == ""
-        ):
-            raise ValueError("`check_in_link` is missing")
+        # CreateEvent always creates a draft initially, so we don't strictly validate other fields here.
         return data
 
 
-class UpdateWorkshop(Base):
+class UpdateEvent(Base):
     english_name: str | None = None
-    "Human-readable name of the workshop in English"
+    "Human-readable name of the event in English"
     russian_name: str | None = None
-    "Human-readable name of the workshop in Russian"
+    "Human-readable name of the event in Russian"
     english_description: str | None = None
-    "Optional textual description of the workshop in English"
+    "Optional textual description of the event in English"
     russian_description: str | None = None
-    "Optional textual description of the workshop in Russian"
-    language: WorkshopLanguage | None = None
-    "Language of the workshop"
+    "Optional textual description of the event in Russian"
+    language: EventLanguage | None = None
+    "Language of the event"
     host: list[Host] | None = None
-    "Host of the workshop (e.g. some club)"
+    "Host of the event (e.g. some club)"
     dtstart: datetime.datetime | None = None
-    "Date and time when the workshop begins"
+    "Date and time when the event begins"
     dtend: datetime.datetime | None = None
-    "Date and time when the workshop ends (must be later than dtstart)"
+    "Date and time when the event ends (must be later than dtstart)"
     check_in_opens: datetime.datetime | None = None
-    "Date and time when the workshop check-in starts. dtstart - 1 day by default"
+    "Date and time when the event check-in starts. dtstart - 1 day by default"
     check_in_closes: datetime.datetime | None = None
-    "Date and time when the workshop check-in ends. Equals dtstart by default"
+    "Date and time when the event check-in ends. Equals dtstart by default"
     place: str | None = None
-    "Optional location where the workshop takes place"
+    "Optional location where the event takes place"
     capacity: int | None = None
-    "Maximum number of attendees allowed for the workshop"
+    "Maximum number of attendees allowed for the event"
     badges: list[Badge] | None = None
-    "List of badges associated with this workshop"
+    "List of badges associated with this event"
     links: list[Link] | None = None
-    "List of links associated with this workshop"
+    "List of links associated with this event"
     check_in_type: CheckInType | None = None
     "Type of check-in (No check-in, on InNoHassle, or by link)"
     check_in_link: str | None = None
     "Link for check-in, if check-in type is 'by link'"
-    is_active: bool | None = None
-    "Marks whether the workshop is currently active (visible for users)"
-    is_draft: bool | None = None
-    "Marks whether the workshop is currently in draft phase (visible only for author)"
 
     @model_validator(mode="before")
     @classmethod
     def validate_time(cls, data: dict):
-        if data.get("is_draft"):
-            return data  # No need to validate drafts
+        # We don't enforce time validation on generic partial updates since the event might be moving to/from draft
         if data.get("dtstart") is None and data.get("dtend") is None:
             return data
         if data.get("dtstart") is None or data.get("dtend") is None:
@@ -411,20 +381,21 @@ class UpdateWorkshop(Base):
         return data
 
 
-class WorkshopCheckin(Base, table=True):
+class EventRegistration(Base, table=True):
+    __tablename__ = "event_registrations"  # type: ignore
     user_id: str = Field(foreign_key="users.innohassle_id", primary_key=True, ondelete="CASCADE")
-    "Foreign key referencing user who checked in (part of primary key)"
-    workshop_id: str = Field(foreign_key="workshops.id", primary_key=True, ondelete="CASCADE")
-    "Foreign key referencing the workshop being checked into (part of primary key)"
-    user: User | None = Relationship(back_populates="checkins")
+    "Foreign key referencing user who registered (part of primary key)"
+    event_id: str = Field(foreign_key="events.id", primary_key=True, ondelete="CASCADE")
+    "Foreign key referencing the event being registered into (part of primary key)"
+    user: User | None = Relationship(back_populates="registrations")
     "Reference to the associated user object"
-    workshop: Workshop | None = Relationship(back_populates="checkins")
-    "Reference to the associated workshop object"
+    event: Event | None = Relationship(back_populates="registrations")
+    "Reference to the associated event object"
 
 
-Workshop._checkins_count = column_property(
-    select(func.count(WorkshopCheckin.user_id))
-    .where(WorkshopCheckin.workshop_id == Workshop.id)
-    .correlate(Workshop)  # explicitly correlate with Workshop table
+Event._registrations_count = column_property(
+    select(func.count(EventRegistration.user_id))
+    .where(EventRegistration.event_id == Event.id)
+    .correlate(Event)  # explicitly correlate with Event table
     .scalar_subquery()
 )

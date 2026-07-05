@@ -9,16 +9,20 @@ from sqlalchemy.pool import NullPool
 from sqlmodel import SQLModel
 
 from src.api.app import app
-from src.api.dependencies import current_user_dep
+from src.api.dependencies import current_user_dep, optional_current_user_dep
 from src.config import settings
 from src.modules.clubs.dependencies import get_user_clubs
+from src.modules.events.repository import EventRepository
 from src.modules.users.repository import UsersRepository
 from src.modules.users.schemas import CreateUserScheme
-from src.modules.workshops.repository import WorkshopRepository
-from src.storages.sql.models import CreateWorkshop, UpdateWorkshop, User, UserRole, WorkshopLanguage
+from src.storages.sql.models import CreateEvent, EventLanguage, UpdateEvent, User, UserRole
 
 # --- Set the database URL for testing (isolate it if needed) ---
 TEST_DATABASE_URL = settings.db_url.get_secret_value()
+if "?" not in TEST_DATABASE_URL:
+    TEST_DATABASE_URL += "?ssl=disable"
+else:
+    TEST_DATABASE_URL += "&ssl=disable"
 
 # --- Async SQLAlchemy engine using NullPool for isolation ---
 engine = create_async_engine(
@@ -89,18 +93,22 @@ async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClien
 async def authenticated_client(async_client: AsyncClient, user: User):
     try:
         app.dependency_overrides[current_user_dep] = lambda: user
+        app.dependency_overrides[optional_current_user_dep] = lambda: user
         yield async_client
     finally:
         app.dependency_overrides.pop(current_user_dep, None)
+        app.dependency_overrides.pop(optional_current_user_dep, None)
 
 
 @pytest.fixture
 async def admin_authenticated_client(async_client: AsyncClient, user: User):
     try:
         app.dependency_overrides[current_user_dep] = lambda: user.model_copy(update={"role": UserRole.ADMIN})
+        app.dependency_overrides[optional_current_user_dep] = lambda: user.model_copy(update={"role": UserRole.ADMIN})
         yield async_client
     finally:
         app.dependency_overrides.pop(current_user_dep, None)
+        app.dependency_overrides.pop(optional_current_user_dep, None)
 
 
 @pytest.fixture
@@ -112,15 +120,19 @@ async def superadmin_authenticated_client(async_client: AsyncClient, user: User)
         app.dependency_overrides[current_user_dep] = lambda: user.model_copy(
             update={"email": superadmin_email, "role": UserRole.ADMIN}
         )
+        app.dependency_overrides[optional_current_user_dep] = lambda: user.model_copy(
+            update={"email": superadmin_email, "role": UserRole.ADMIN}
+        )
         yield async_client
     finally:
         app.dependency_overrides.pop(current_user_dep, None)
+        app.dependency_overrides.pop(optional_current_user_dep, None)
         settings.superadmin_emails = original_superadmin_emails
 
 
 @pytest.fixture
-async def workshop_repository(async_session: AsyncSession):
-    return WorkshopRepository(async_session)
+async def event_repository(async_session: AsyncSession):
+    return EventRepository(async_session)
 
 
 @pytest.fixture
@@ -144,13 +156,13 @@ async def user(user_repository: UsersRepository):
 
 
 @pytest.fixture
-async def workshop_data_to_create():
-    return CreateWorkshop(
+async def event_data_to_create(user: User):
+    return CreateEvent(
         english_name="name",
         russian_name="russian name",
         english_description="description",
         russian_description="russian description",
-        language=WorkshopLanguage.ENGLISH,
+        language=EventLanguage.ENGLISH,
         place="place",
         dtstart=datetime.now(UTC) + timedelta(minutes=1),
         dtend=datetime.now(UTC) + timedelta(days=1),
@@ -159,8 +171,8 @@ async def workshop_data_to_create():
 
 
 @pytest.fixture
-async def workshop_data_to_update():
-    return UpdateWorkshop(
+async def event_data_to_update():
+    return UpdateEvent(
         english_name="name_updated",
         russian_name="russian name updated",
         english_description="description_updated",
@@ -172,10 +184,11 @@ async def workshop_data_to_update():
 
 
 @pytest.fixture
-async def already_created_workshop(
-    workshop_repository: WorkshopRepository,
-    workshop_data_to_create: CreateWorkshop,
+async def already_created_event(
+    event_repository: EventRepository,
+    event_data_to_create: CreateEvent,
+    user: User,
 ):
-    workshop, _ = await workshop_repository.create(workshop_data_to_create)
-    assert workshop is not None
-    return workshop
+    event, _ = await event_repository.create(event_data_to_create, created_by=user.innohassle_id)
+    assert event is not None
+    return event

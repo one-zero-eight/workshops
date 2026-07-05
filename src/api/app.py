@@ -29,11 +29,11 @@ app = FastAPI(
     servers=[
         {"url": settings.app_root_path, "description": "Current"},
         {
-            "url": "https://api.innohassle.ru/workshops/v0",
+            "url": "https://api.innohassle.ru/events/v0",
             "description": "Production environment",
         },
         {
-            "url": "https://api.innohassle.ru/workshops/staging-v0",
+            "url": "https://api.innohassle.ru/events/staging-v0",
             "description": "Staging environment",
         },
     ],
@@ -97,10 +97,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from src.modules.events.routes import router as router_events  # noqa: E402
 from src.modules.users.routes import router as router_users  # noqa: E402
-from src.modules.workshops.routes import router as router_workshops  # noqa: E402
 
 # Import routers above and include them below [do not edit this comment]
 app.include_router(router_users)
-app.include_router(router_workshops)
+app.include_router(router_events)
 # ^
