@@ -38,11 +38,7 @@ class WorkshopRepository:
         return db_workshop, WorkshopEnum.CREATED
 
     async def get_all(self, limit: int = 100, close_transaction: bool = True) -> Sequence[Workshop]:
-        query = select(Workshop).where(
-            Workshop.is_active.is_(True),
-            Workshop.is_draft.is_(False),
-            Workshop.is_approved.is_(True),
-        )
+        query = select(Workshop)
         result = await self.session.execute(query.limit(limit=limit))
         workshops = list(result.scalars().all())
         if close_transaction:
