@@ -1,4 +1,7 @@
-# Workshops
+> [!WARNING]
+> Moved to https://github.com/one-zero-eight/monorepo as **Events**
+
+# ~~Workshops~~
 
 > https://api.innohassle.ru/workshops/v0
 
